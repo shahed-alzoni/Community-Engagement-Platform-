@@ -1,6 +1,6 @@
 from rest_framework import generics, permissions
 
-from cep.serializers.accounts import CitizenRegistrationSerializer
+from cep.serializers import CitizenRegistrationSerializer
 
 
 class CitizenRegistrationView(generics.CreateAPIView):

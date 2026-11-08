@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from cep.models import User
-from cep.services.accounts import CitizenRegistrationService
+from cep.services import CitizenRegistrationService
 
 
 class CitizenRegistrationSerializer(serializers.ModelSerializer):
