@@ -1,6 +1,6 @@
 import { Mail, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 
 import { AuthLayout } from '../components/auth/AuthLayout'
 import { FormField } from '../components/auth/FormField'
@@ -14,6 +14,7 @@ export function AdminLoginPage() {
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   function updateField(event) {
     const { name, value } = event.target
@@ -39,8 +40,10 @@ export function AdminLoginPage() {
       const result = await loginAdmin({ email: form.email.trim(), password: form.password })
       sessionStorage.setItem('qarib.accessToken', result.access)
       sessionStorage.setItem('qarib.refreshToken', result.refresh)
+      sessionStorage.setItem('qarib.user', JSON.stringify(result.user))
       setSuccess(true)
       setMessage(`Welcome, ${result.user.full_name}.`)
+      navigate('/admin/accounts', { replace: true })
     } catch (error) {
       setSuccess(false)
       setMessage(

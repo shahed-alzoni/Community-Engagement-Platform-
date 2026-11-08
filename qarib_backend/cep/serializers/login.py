@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from cep.services import LoginService
+from cep.models import User
 
 
 class LoginSerializer(serializers.Serializer):
@@ -12,4 +13,5 @@ class LoginSerializer(serializers.Serializer):
             email=attrs["email"],
             password=attrs["password"],
             request=self.context.get("request"),
+            required_role=User.Role.CITIZEN,
         )

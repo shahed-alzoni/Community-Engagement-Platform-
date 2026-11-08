@@ -331,3 +331,7 @@ label {
     transition-duration: 0.01ms !important;
   }
 }
+.representative-welcome { text-align: center; }
+.representative-welcome p { margin: 4px 0 18px; color: var(--text-muted); line-height: 1.6; }
+.representative-welcome .role-badge { margin-inline: auto; }
+.representative-logout { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; }

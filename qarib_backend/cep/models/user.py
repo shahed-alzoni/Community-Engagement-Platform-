@@ -34,6 +34,7 @@ class User(AbstractUser):
         unique=True,
         editable=False,
     )
+    must_change_password = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -52,7 +53,7 @@ class User(AbstractUser):
                     | (~models.Q(role="system_admin") & models.Q(system_admin_slot__isnull=True))
                 ),
                 name="valid_system_admin_slot",
-            )
+            ),
         ]
 
     def save(self, *args, **kwargs):
@@ -60,6 +61,11 @@ class User(AbstractUser):
         self.phone_number = UserManager.normalize_phone_number(self.phone_number)
         self.full_name = self.full_name.strip()
         self.system_admin_slot = self.role == self.Role.SYSTEM_ADMIN or None
+
+        if kwargs.get("update_fields") is not None:
+            kwargs["update_fields"] = set(kwargs["update_fields"]) | {
+                "system_admin_slot",
+            }
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:

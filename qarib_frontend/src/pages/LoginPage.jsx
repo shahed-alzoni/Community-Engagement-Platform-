@@ -89,6 +89,7 @@ export function LoginPage() {
         <p className="auth-switch">
           New to Qarib? <Link to="/register">Create account</Link>
         </p>
+        <p className="auth-switch"><Link to="/representative/login">Organization representative login</Link></p>
       </form>
     </AuthLayout>
   )
