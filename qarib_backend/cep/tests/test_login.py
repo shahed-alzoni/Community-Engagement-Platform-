@@ -14,7 +14,7 @@ class LoginApiTests(APITestCase):
         self.user = User.objects.create_user(
             full_name="Test Citizen",
             email="citizen@example.com",
-            phone_number="+963991234567",
+            phone_number="0991234567",
             password=self.password,
         )
 

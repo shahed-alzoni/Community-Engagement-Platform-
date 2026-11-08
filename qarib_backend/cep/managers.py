@@ -46,6 +46,9 @@ class UserManager(BaseUserManager):
     ):
         from cep.models import User
 
+        if self.filter(system_admin_slot=True).exists():
+            raise ValueError("The system already has a System Admin account.")
+
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -55,6 +58,8 @@ class UserManager(BaseUserManager):
             raise ValueError("A superuser must have is_staff=True.")
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("A superuser must have is_superuser=True.")
+        if extra_fields.get("role") != User.Role.SYSTEM_ADMIN:
+            raise ValueError("A superuser must have the System Admin role.")
 
         return self.create_user(
             email=email,

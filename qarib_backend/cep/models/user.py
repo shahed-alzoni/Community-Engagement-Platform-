@@ -22,12 +22,18 @@ class User(AbstractUser):
         unique=True,
         validators=[
             RegexValidator(
-                regex=r"^\+?[1-9]\d{7,14}$",
-                message="Enter a valid mobile number in international format.",
+                regex=r"^\d{10}$",
+                message="Enter a valid 10-digit mobile number.",
             )
         ],
     )
     role = models.CharField(max_length=24, choices=Role.choices, default=Role.CITIZEN)
+    system_admin_slot = models.BooleanField(
+        null=True,
+        blank=True,
+        unique=True,
+        editable=False,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -39,11 +45,21 @@ class User(AbstractUser):
     class Meta:
         db_table = "users"
         ordering = ["-created_at"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(role="system_admin", system_admin_slot=True)
+                    | (~models.Q(role="system_admin") & models.Q(system_admin_slot__isnull=True))
+                ),
+                name="valid_system_admin_slot",
+            )
+        ]
 
     def save(self, *args, **kwargs):
         self.email = UserManager.normalize_email(self.email).lower()
         self.phone_number = UserManager.normalize_phone_number(self.phone_number)
         self.full_name = self.full_name.strip()
+        self.system_admin_slot = self.role == self.Role.SYSTEM_ADMIN or None
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:

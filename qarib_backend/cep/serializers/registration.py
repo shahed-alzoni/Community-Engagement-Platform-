@@ -16,7 +16,7 @@ class CitizenRegistrationSerializer(serializers.ModelSerializer):
         ]
     )
     phone_number = serializers.CharField(
-        max_length=16,
+        max_length=10,
         validators=[
             UniqueValidator(
                 queryset=User.objects.all(),

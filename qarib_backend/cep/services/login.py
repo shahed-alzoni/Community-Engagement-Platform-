@@ -8,11 +8,11 @@ class LoginService:
     INVALID_CREDENTIALS_MESSAGE = "Unable to log in with the provided credentials."
 
     @classmethod
-    def login(cls, *, email: str, password: str, request=None) -> dict:
+    def login(cls, *, email: str, password: str, request=None, required_role=None) -> dict:
         normalized_email = email.strip().lower()
         user = authenticate(request=request, email=normalized_email, password=password)
 
-        if user is None or not user.is_active:
+        if user is None or not user.is_active or (required_role and user.role != required_role):
             raise AuthenticationFailed(cls.INVALID_CREDENTIALS_MESSAGE)
 
         refresh = RefreshToken.for_user(user)

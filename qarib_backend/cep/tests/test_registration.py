@@ -12,7 +12,7 @@ class CitizenRegistrationApiTests(APITestCase):
         payload = {
             "full_name": "Test Citizen",
             "email": "citizen@example.com",
-            "phone_number": "+963991234567",
+            "phone_number": "0991234567",
             "password": "StrongPass!2026",
             "password_confirm": "StrongPass!2026",
         }
@@ -33,7 +33,7 @@ class CitizenRegistrationApiTests(APITestCase):
         User.objects.create_user(
             full_name="Inactive Citizen",
             email="inactive@example.com",
-            phone_number="+963991111111",
+            phone_number="0991111111",
             password="StrongPass!2026",
             is_active=False,
         )
@@ -50,17 +50,27 @@ class CitizenRegistrationApiTests(APITestCase):
         User.objects.create_user(
             full_name="Existing Citizen",
             email="existing@example.com",
-            phone_number="+963992222222",
+            phone_number="0992222222",
             password="StrongPass!2026",
         )
         response = self.client.post(
             self.url,
-            self.valid_payload(phone_number="+963992222222"),
+            self.valid_payload(phone_number="0992222222"),
             format="json",
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("phone_number", response.data)
+
+    def test_phone_number_must_contain_exactly_ten_digits(self):
+        for phone_number in ("099123456", "09912345678", "+963991234567"):
+            response = self.client.post(
+                self.url,
+                self.valid_payload(phone_number=phone_number),
+                format="json",
+            )
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertIn("phone_number", response.data)
 
     def test_rejects_mismatched_passwords(self):
         response = self.client.post(
