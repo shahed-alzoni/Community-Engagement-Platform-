@@ -97,7 +97,7 @@ export function AdminAccountsPage() {
             <AdminSelect ariaLabel="Filter by status" value={filters.status} onChange={(status) => setFilters((current) => ({ ...current, status, page: 1 }))} options={[{ value: '', label: 'All statuses' }, { value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]} />
           </div>
           {error ? <div className="form-message form-message--error">{error}</div> : null}
-          {loading ? <div className="admin-empty">Loading accounts…</div> : <AccountTable users={users} onStatusChange={changeStatus} onView={(user) => navigate(`/admin/accounts/${user.id}`)} onEdit={setEditingUser} busyUserId={busyUserId} />}
+          {loading ? <div className="admin-empty">Loading accounts…</div> : <AccountTable users={users} onStatusChange={changeStatus} onView={(user) => navigate(`/admin/accounts/${user.id}`)} onEdit={setEditingUser} busyUserId={busyUserId} showOrganization={filters.role !== 'citizen'} />}
           <div className="pagination-row"><span>{pagination.count} accounts</span><div><button type="button" disabled={!pagination.previous} onClick={() => setFilters((current) => ({ ...current, page: Math.max(1, current.page - 1) }))}>Previous</button><button type="button" disabled={!pagination.next} onClick={() => setFilters((current) => ({ ...current, page: current.page + 1 }))}>Next</button></div></div>
         </section>
       </div>

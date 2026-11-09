@@ -14,6 +14,7 @@ from .representative_login import (
     RepresentativeInitialPasswordChangeView,
     RepresentativeLoginView,
 )
+from .profile import ProfileView
 
 __all__ = [
     "AdminLoginView",
@@ -29,4 +30,5 @@ __all__ = [
     "PasswordResetRequestView",
     "RepresentativeInitialPasswordChangeView",
     "RepresentativeLoginView",
+    "ProfileView",
 ]

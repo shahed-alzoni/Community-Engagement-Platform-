@@ -29,7 +29,7 @@ export function AdminSelect({ ariaLabel, value, options, onChange, invalid = fal
 
   return (
     <div className={`admin-select${open ? ' admin-select--open' : ''}`} ref={rootRef}>
-      <button type="button" className="admin-select-trigger" aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} aria-controls={listId} aria-invalid={invalid} disabled={disabled} onClick={() => setOpen((current) => !current)} onKeyDown={handleKeyDown}>
+      <button type="button" role="combobox" className="admin-select-trigger" aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} aria-controls={listId} aria-invalid={invalid} disabled={disabled} onClick={() => setOpen((current) => !current)} onKeyDown={handleKeyDown}>
         <span>{selected?.label}</span><ChevronDown size={17} />
       </button>
       {open ? (

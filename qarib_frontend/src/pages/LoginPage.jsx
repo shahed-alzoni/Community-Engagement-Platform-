@@ -1,6 +1,6 @@
 import { Mail } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 
 import { AuthLayout } from '../components/auth/AuthLayout'
 import { FormField } from '../components/auth/FormField'
@@ -10,6 +10,7 @@ import { ApiError, loginCitizen } from '../services/authApi'
 
 export function LoginPage() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState({})
   const [message, setMessage] = useState('')
@@ -40,8 +41,10 @@ export function LoginPage() {
       const result = await loginCitizen({ email: form.email.trim(), password: form.password })
       sessionStorage.setItem('qarib.accessToken', result.access)
       sessionStorage.setItem('qarib.refreshToken', result.refresh)
+      sessionStorage.setItem('qarib.user', JSON.stringify(result.user))
       setLoggedIn(true)
       setMessage(`Welcome back, ${result.user.full_name}.`)
+      navigate('/citizen/home', { replace: true })
     } catch (error) {
       if (error instanceof ApiError) {
         setMessage(error.message)

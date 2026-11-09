@@ -72,6 +72,26 @@ class PasswordResetTests(APITestCase):
         self.assertEqual(inactive_response.data, unknown_response.data)
         self.assertEqual(len(mail.outbox), 0)
 
+    def test_representative_cannot_reset_temporary_password_before_first_login(self):
+        representative = User.objects.create_user(
+            email="first-login-representative@example.com",
+            phone_number="0900000009",
+            full_name="First Login Representative",
+            password="TemporaryPass!2026",
+            role=User.Role.ORGANIZATION_REPRESENTATIVE,
+            must_change_password=True,
+        )
+
+        before_first_login = self.client.post(self.request_url, {"email": representative.email})
+        representative.must_change_password = False
+        representative.save(update_fields=["must_change_password", "updated_at"])
+        after_first_login = self.client.post(self.request_url, {"email": representative.email})
+
+        self.assertEqual(before_first_login.status_code, status.HTTP_200_OK)
+        self.assertEqual(after_first_login.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [representative.email])
+
     def test_request_endpoint_is_rate_limited_after_five_attempts(self):
         for _ in range(5):
             response = self.client.post(self.request_url, {"email": "unknown@example.com"})

@@ -15,6 +15,7 @@ from cep.views import (
     PasswordResetRequestView,
     RepresentativeInitialPasswordChangeView,
     RepresentativeLoginView,
+    ProfileView,
 )
 
 
@@ -59,4 +60,5 @@ urlpatterns = [
         name="password-reset-confirm",
     ),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+    path("profile/", ProfileView.as_view(), name="profile"),
 ]

@@ -4,6 +4,7 @@ from .login import LoginService
 from .password_reset import PasswordResetService
 from .registration import CitizenRegistrationService
 from .representative_login import RepresentativeLoginService
+from .profile import ProfileService
 
 __all__ = [
     "AdminLoginService",
@@ -12,4 +13,5 @@ __all__ = [
     "LoginService",
     "PasswordResetService",
     "RepresentativeLoginService",
+    "ProfileService",
 ]

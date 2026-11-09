@@ -11,6 +11,8 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { RepresentativeChangePasswordPage } from './pages/RepresentativeChangePasswordPage'
 import { RepresentativeHomePage } from './pages/RepresentativeHomePage'
 import { RepresentativeLoginPage } from './pages/RepresentativeLoginPage'
+import { CitizenHomePage } from './pages/CitizenHomePage'
+import { PortalProfilePage } from './pages/PortalProfilePage'
 
 export default function App() {
   return (
@@ -21,6 +23,8 @@ export default function App() {
       <Route path="/representative/login" element={<RepresentativeLoginPage />} />
       <Route path="/representative/change-password" element={<RepresentativeChangePasswordPage />} />
       <Route path="/representative/home" element={<RepresentativeHomePage />} />
+      <Route path="/citizen/home" element={<CitizenHomePage />} />
+      <Route path="/portal/profile" element={<PortalProfilePage />} />
       <Route path="/admin/accounts" element={<AdminAccountsPage />} />
       <Route path="/admin/accounts/:userId" element={<AdminUserDetailPage />} />
       <Route path="/admin/accounts/:userId/edit" element={<AdminUserEditPage />} />

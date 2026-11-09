@@ -100,3 +100,11 @@ export function setManagedUserStatus(userId, isActive) {
     method: 'PATCH', payload: { is_active: isActive }, authenticated: true,
   })
 }
+
+export function fetchMyProfile() {
+  return request('/profile/', { authenticated: true })
+}
+
+export function updateMyProfile(payload) {
+  return request('/profile/', { method: 'PATCH', payload, authenticated: true })
+}

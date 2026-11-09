@@ -14,6 +14,7 @@ from .representative_login import (
     RepresentativeInitialPasswordChangeSerializer,
     RepresentativeLoginSerializer,
 )
+from .profile import ProfileSerializer, ProfileUpdateSerializer
 
 __all__ = [
     "AdminLoginSerializer",
@@ -29,4 +30,6 @@ __all__ = [
     "PasswordResetRequestSerializer",
     "RepresentativeInitialPasswordChangeSerializer",
     "RepresentativeLoginSerializer",
+    "ProfileSerializer",
+    "ProfileUpdateSerializer",
 ]

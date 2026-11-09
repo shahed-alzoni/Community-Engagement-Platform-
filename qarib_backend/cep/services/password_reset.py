@@ -17,7 +17,11 @@ logger = logging.getLogger(__name__)
 class PasswordResetService:
     @staticmethod
     def request_reset(*, email: str) -> None:
-        user = User.objects.filter(email=email.strip().lower(), is_active=True).first()
+        user = User.objects.filter(
+            email=email.strip().lower(),
+            is_active=True,
+            must_change_password=False,
+        ).first()
         if user is None:
             return
 

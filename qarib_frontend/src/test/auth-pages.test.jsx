@@ -14,7 +14,10 @@ function renderAt(path) {
 }
 
 describe('authentication pages', () => {
-  afterEach(() => vi.restoreAllMocks())
+  afterEach(() => {
+    vi.restoreAllMocks()
+    sessionStorage.clear()
+  })
 
   it('renders all registration fields required by the API', () => {
     renderAt('/register')
@@ -44,7 +47,7 @@ describe('authentication pages', () => {
       json: async () => ({
         access: 'access-token',
         refresh: 'refresh-token',
-        user: { full_name: 'Test Citizen' },
+        user: { id: 2, full_name: 'Test Citizen', role: 'citizen' },
       }),
     })
     renderAt('/login')
@@ -53,7 +56,7 @@ describe('authentication pages', () => {
     await userEvent.type(screen.getByPlaceholderText('Password'), 'StrongPass!2026')
     await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
 
-    expect(await screen.findByText('Welcome back, Test Citizen.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Welcome back, Test' })).toBeInTheDocument()
     expect(sessionStorage.getItem('qarib.accessToken')).toBe('access-token')
     expect(sessionStorage.getItem('qarib.refreshToken')).toBe('refresh-token')
   })
@@ -178,9 +181,29 @@ describe('authentication pages', () => {
     await userEvent.type(screen.getByPlaceholderText('Confirm new password'), 'NewStrongPass!2026')
     await userEvent.click(screen.getByRole('button', { name: 'Save password and continue' }))
 
-    expect(await screen.findByText('Ministry of Water')).toBeInTheDocument()
+    expect((await screen.findAllByText('Ministry of Water')).length).toBeGreaterThan(0)
     expect(sessionStorage.getItem('qarib.accessToken')).toBe('representative-access')
     expect(sessionStorage.getItem('qarib.initialPasswordToken')).toBeNull()
+  })
+
+  it('lets a citizen open and update the shared portal profile', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'citizen-access')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 2, full_name: 'Test Citizen', role: 'citizen' }))
+    const profile = { id: 2, full_name: 'Test Citizen', email: 'citizen@example.com', phone_number: '0991234567', role: 'citizen', organization_name: null }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, options = {}) => ({
+      ok: true,
+      json: async () => options.method === 'PATCH' ? { ...profile, full_name: 'Updated Citizen' } : profile,
+    }))
+    renderAt('/portal/profile')
+
+    const nameInput = await screen.findByLabelText(/Full name/)
+    await userEvent.clear(nameInput)
+    await userEvent.type(nameInput, 'Updated Citizen')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByText('Your profile was updated successfully.')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Organization/)).not.toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/profile/', expect.objectContaining({ method: 'PATCH' }))
   })
 
   it('opens the admin account creation form from the dashboard', async () => {
@@ -202,6 +225,24 @@ describe('authentication pages', () => {
 
     expect(screen.getByRole('heading', { name: 'Add new account' })).toBeInTheDocument()
     expect(screen.getByLabelText('Account role')).toBeInTheDocument()
+  })
+
+  it('keeps account actions visible and hides organization for the citizens filter', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'admin-access-token')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 1, full_name: 'System Admin', role: 'system_admin' }))
+    const citizen = { id: 5, full_name: 'Visible Citizen', email: 'visible@example.com', phone_number: '0995555555', role: 'citizen', organization_name: null, is_active: true }
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => ({
+      ok: true,
+      json: async () => url.includes('/organizations/') ? [] : { count: 1, next: null, previous: null, summary: {}, results: [citizen] },
+    }))
+    renderAt('/admin/accounts')
+
+    expect(await screen.findByRole('switch', { name: 'Deactivate Visible Citizen' })).toBeVisible()
+    await userEvent.click(screen.getByRole('combobox', { name: 'Filter by role' }))
+    await userEvent.click(screen.getByRole('option', { name: 'Citizens' }))
+
+    expect(await screen.findByRole('switch', { name: 'Deactivate Visible Citizen' })).toBeVisible()
+    expect(screen.queryByRole('columnheader', { name: 'Organization' })).not.toBeInTheDocument()
   })
 
   it('shows account creation API errors beside the responsible field', async () => {
