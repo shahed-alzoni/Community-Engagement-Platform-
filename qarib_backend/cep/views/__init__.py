@@ -8,8 +8,12 @@ from .admin_user_management import (
     AvailableOrganizationListView,
 )
 from .login import LoginView
+from .email_verification import EmailChangeConfirmView, EmailChangeRequestView
+from .logout import LogoutView
 from .password_reset import PasswordResetConfirmView, PasswordResetRequestView
-from .registration import CitizenRegistrationView
+from .password_change import PasswordChangeView
+from .complaint import CitizenComplaintDetailView, CitizenComplaintListCreateView, CitizenComplaintPhotoView, ComplaintOrganizationListView
+from .registration import CitizenRegistrationConfirmView, CitizenRegistrationResendView, CitizenRegistrationView
 from .representative_login import (
     RepresentativeInitialPasswordChangeView,
     RepresentativeLoginView,
@@ -25,8 +29,18 @@ __all__ = [
     "AdminUserStatusView",
     "AvailableOrganizationListView",
     "CitizenRegistrationView",
+    "CitizenRegistrationConfirmView",
+    "CitizenRegistrationResendView",
+    "EmailChangeConfirmView",
+    "EmailChangeRequestView",
     "LoginView",
+    "LogoutView",
     "PasswordResetConfirmView",
+    "PasswordChangeView",
+    "CitizenComplaintDetailView",
+    "CitizenComplaintListCreateView",
+    "CitizenComplaintPhotoView",
+    "ComplaintOrganizationListView",
     "PasswordResetRequestView",
     "RepresentativeInitialPasswordChangeView",
     "RepresentativeLoginView",

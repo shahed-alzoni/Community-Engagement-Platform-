@@ -1,16 +1,16 @@
-from django.db import transaction
-
-from cep.models import User
+from cep.models import PendingCitizenRegistration, User
 
 
 class CitizenRegistrationService:
     @staticmethod
-    @transaction.atomic
-    def register(*, full_name: str, email: str, phone_number: str, password: str) -> User:
-        return User.objects.create_user(
-            full_name=full_name,
-            email=email,
-            phone_number=phone_number,
-            password=password,
+    def create_verified(*, pending: PendingCitizenRegistration) -> User:
+        user = User.objects.create_user(
+            full_name=pending.full_name,
+            email=pending.email,
+            phone_number=pending.phone_number,
+            password=None,
             role=User.Role.CITIZEN,
         )
+        user.password = pending.password_hash
+        user.save(update_fields=["password"])
+        return user

@@ -83,13 +83,13 @@ export function CreateAccountModal({ organizations, onClose, onCreated }) {
           {field('full_name', 'Full name', (error) => <input name="full_name" value={form.full_name} onChange={update} aria-invalid={Boolean(error)} required />)}
           {field('email', 'Email address', (error) => <input name="email" type="email" value={form.email} onChange={update} aria-invalid={Boolean(error)} required />)}
           {field('phone_number', 'Mobile number', (error) => <input name="phone_number" inputMode="numeric" maxLength={10} value={form.phone_number} onChange={update} placeholder="10 digits" aria-invalid={Boolean(error)} required />)}
-          {field('password', 'Temporary password', (error) => <input name="password" type="password" value={form.password} onChange={update} aria-invalid={Boolean(error)} required />)}
+          {field('password', form.role === 'representative' ? 'Temporary password' : 'Password', (error) => <input name="password" type="password" value={form.password} onChange={update} aria-invalid={Boolean(error)} required />)}
           {field('role', 'Account role', (error) => <AdminSelect ariaLabel="Account role" value={form.role} onChange={(value) => updateValue('role', value)} invalid={Boolean(error)} options={[{ value: 'citizen', label: 'Citizen' }, { value: 'representative', label: 'Organization representative' }]} />)}
           {form.role === 'representative' ? (
             <>
               {field('organization_id', 'Organization', (error) => <AdminSelect ariaLabel="Organization" value={form.organizationChoice} onChange={(value) => updateValue('organizationChoice', value)} invalid={Boolean(error)} options={[{ value: 'new', label: 'Create a new organization' }, ...organizations.map((organization) => ({ value: organization.id, label: organization.name }))]} />)}
               {form.organizationChoice === 'new' ? <div className="form-span">{field('organization_name', 'New organization name', (error) => <input name="organization_name" value={form.organization_name} onChange={update} aria-invalid={Boolean(error)} required />)}</div> : null}
-              <p className="form-note form-span">The representative will be required to change this password when representative login is implemented.</p>
+              <p className="form-note form-span">The representative will be required to change this password on first login.</p>
             </>
           ) : null}
           {message ? <div className="form-message form-message--error form-span">{message}</div> : null}

@@ -3,14 +3,21 @@ from rest_framework.exceptions import ValidationError
 
 from django.utils import timezone
 
-from cep.models import Organization, OrganizationRepresentativeAssignment, User
+from cep.models import Complaint, Organization, OrganizationRepresentativeAssignment, User
 
 
 class AdminUserManagementService:
     @staticmethod
+    def _set_open_complaint_representative(*, organization: Organization, representative: User | None):
+        Complaint.objects.filter(
+            organization=organization,
+            status__in=[Complaint.Status.PENDING, Complaint.Status.IN_PROGRESS],
+        ).update(assigned_representative=representative)
+
+    @staticmethod
     def _latest_assignment(user: User):
         return user.organization_assignments.select_related("organization").order_by(
-            "-assigned_at"
+            "-assigned_at", "-pk"
         ).first()
 
     @staticmethod
@@ -51,6 +58,9 @@ class AdminUserManagementService:
                     representative=user,
                     organization=organization,
                 )
+                AdminUserManagementService._set_open_complaint_representative(
+                    organization=organization, representative=user,
+                )
             return user
         except IntegrityError as error:
             if role == User.Role.ORGANIZATION_REPRESENTATIVE:
@@ -75,6 +85,9 @@ class AdminUserManagementService:
                 if assignment is not None:
                     assignment.ended_at = timezone.now()
                     assignment.save(update_fields=["ended_at"])
+                    AdminUserManagementService._set_open_complaint_representative(
+                        organization=assignment.organization, representative=None,
+                    )
             user.is_active = False
             user.save(update_fields=["is_active", "updated_at"])
         return user
@@ -106,6 +119,9 @@ class AdminUserManagementService:
                 representative=user,
                 organization=organization,
             )
+            AdminUserManagementService._set_open_complaint_representative(
+                organization=organization, representative=user,
+            )
         user.is_active = True
         user.save(update_fields=["is_active", "updated_at"])
         return user
@@ -124,7 +140,7 @@ class AdminUserManagementService:
         if full_name is not None:
             user.full_name = full_name
             updated_fields.append("full_name")
-        if email is not None and user.role == User.Role.SYSTEM_ADMIN:
+        if email is not None:
             user.email = email
             updated_fields.append("email")
         if phone_number is not None:
@@ -149,10 +165,16 @@ class AdminUserManagementService:
                 if current_assignment is not None:
                     current_assignment.ended_at = timezone.now()
                     current_assignment.save(update_fields=["ended_at"])
+                    AdminUserManagementService._set_open_complaint_representative(
+                        organization=current_assignment.organization, representative=None,
+                    )
                 if user.is_active:
                     OrganizationRepresentativeAssignment.objects.create(
                         representative=user,
                         organization=organization,
+                    )
+                    AdminUserManagementService._set_open_complaint_representative(
+                        organization=organization, representative=user,
                     )
                 else:
                     now = timezone.now()

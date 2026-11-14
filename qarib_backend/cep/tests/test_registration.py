@@ -1,8 +1,14 @@
+import re
+from datetime import timedelta
+
+from django.core import mail
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import AccessToken
 
-from cep.models import User
+from cep.models import PendingCitizenRegistration, User
 
 
 class CitizenRegistrationApiTests(APITestCase):
@@ -22,10 +28,18 @@ class CitizenRegistrationApiTests(APITestCase):
     def test_registers_a_citizen(self):
         response = self.client.post(self.url, self.valid_payload(), format="json")
 
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertFalse(User.objects.filter(email="citizen@example.com").exists())
+        code = re.search(r"\b\d{6}\b", mail.outbox[-1].body).group()
+        response = self.client.post(reverse("cep:citizen-register-confirm"), {"email": "citizen@example.com", "code": code}, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         user = User.objects.get(email="citizen@example.com")
         self.assertEqual(user.role, User.Role.CITIZEN)
         self.assertTrue(user.check_password("StrongPass!2026"))
+        self.assertEqual(response.data["user"]["role"], User.Role.CITIZEN)
+        self.assertEqual(response.data["user"]["id"], user.pk)
+        self.assertEqual(AccessToken(response.data["access"])["user_id"], str(user.pk))
+        self.assertIn("refresh", response.data)
         self.assertNotIn("password", response.data)
         self.assertNotIn("password_confirm", response.data)
 
@@ -89,6 +103,21 @@ class CitizenRegistrationApiTests(APITestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        code = re.search(r"\b\d{6}\b", mail.outbox[-1].body).group()
+        self.client.post(reverse("cep:citizen-register-confirm"), {"email": "citizen@example.com", "code": code}, format="json")
         user = User.objects.get(email="citizen@example.com")
         self.assertEqual(user.role, User.Role.CITIZEN)
+    def test_wrong_or_expired_code_never_creates_account(self):
+        self.client.post(self.url, self.valid_payload(), format="json")
+        wrong = self.client.post(reverse("cep:citizen-register-confirm"), {"email": "citizen@example.com", "code": "999999"}, format="json")
+        self.assertEqual(wrong.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(User.objects.filter(email="citizen@example.com").exists())
+        pending = PendingCitizenRegistration.objects.get(email="citizen@example.com")
+        self.assertNotEqual(pending.password_hash, "StrongPass!2026")
+        pending.expires_at = timezone.now() - timedelta(seconds=1)
+        pending.save(update_fields=["expires_at"])
+        correct = re.search(r"\b\d{6}\b", mail.outbox[-1].body).group()
+        expired = self.client.post(reverse("cep:citizen-register-confirm"), {"email": "citizen@example.com", "code": correct}, format="json")
+        self.assertEqual(expired.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(User.objects.filter(email="citizen@example.com").exists())

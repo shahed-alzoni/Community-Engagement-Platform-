@@ -6,7 +6,7 @@ import { AdminSelect } from './AdminSelect'
 
 export function EditAccountModal({ account, organizations, onClose, onUpdated }) {
   const [user, setUser] = useState(account)
-  const [form, setForm] = useState({ full_name: account.full_name, phone_number: account.phone_number, organization_id: account.organization_id ? String(account.organization_id) : '' })
+  const [form, setForm] = useState({ full_name: account.full_name, email: account.email, phone_number: account.phone_number, organization_id: account.organization_id ? String(account.organization_id) : '' })
   const [fieldErrors, setFieldErrors] = useState({})
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,7 +16,7 @@ export function EditAccountModal({ account, organizations, onClose, onUpdated })
     fetchAdminUser(account.id).then((details) => {
       if (!active) return
       setUser(details)
-      setForm({ full_name: details.full_name, phone_number: details.phone_number, organization_id: details.organization_id ? String(details.organization_id) : '' })
+      setForm({ full_name: details.full_name, email: details.email, phone_number: details.phone_number, organization_id: details.organization_id ? String(details.organization_id) : '' })
     }).catch((error) => active && setMessage(error instanceof ApiError ? error.message : 'The service is unavailable.'))
     return () => { active = false }
   }, [account.id])
@@ -43,7 +43,7 @@ export function EditAccountModal({ account, organizations, onClose, onUpdated })
     setLoading(true)
     setFieldErrors({})
     setMessage('')
-    const payload = { full_name: form.full_name.trim(), phone_number: form.phone_number }
+    const payload = { full_name: form.full_name.trim(), email: form.email.trim(), phone_number: form.phone_number }
     if (user.role === 'representative' && form.organization_id) payload.organization_id = Number(form.organization_id)
     try {
       onUpdated(await updateManagedUser(user.id, payload))
@@ -68,7 +68,7 @@ export function EditAccountModal({ account, organizations, onClose, onUpdated })
         <form onSubmit={submit} className="edit-account-form">
           <label>Full name<input value={form.full_name} onChange={(event) => updateValue('full_name', event.target.value)} aria-invalid={Boolean(errorFor('full_name'))} required />{errorFor('full_name') ? <span className="admin-field-error">{errorFor('full_name')}</span> : null}</label>
           <label>Mobile number<input value={form.phone_number} onChange={(event) => updateValue('phone_number', event.target.value)} maxLength={10} inputMode="numeric" aria-invalid={Boolean(errorFor('phone_number'))} required />{errorFor('phone_number') ? <span className="admin-field-error">{errorFor('phone_number')}</span> : null}</label>
-          <label>Email address<input value={user.email} disabled /></label>
+          <label>Email address<input type="email" value={form.email} onChange={(event) => updateValue('email', event.target.value)} aria-invalid={Boolean(errorFor('email'))} required />{errorFor('email') ? <span className="admin-field-error">{errorFor('email')}</span> : null}</label>
           <label>Role<input value={user.role.replace('_', ' ')} disabled /></label>
           {user.role === 'representative' ? <label className="form-span">Organization<AdminSelect ariaLabel="Organization" value={form.organization_id} onChange={(value) => updateValue('organization_id', value)} invalid={Boolean(errorFor('organization_id'))} options={organizationOptions} />{errorFor('organization_id') ? <span className="admin-field-error">{errorFor('organization_id')}</span> : null}</label> : null}
           {message ? <div className="form-message form-message--error form-span">{message}</div> : null}

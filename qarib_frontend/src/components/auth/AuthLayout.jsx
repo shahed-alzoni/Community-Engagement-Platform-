@@ -11,7 +11,7 @@ export function AuthLayout({ title, subtitle, children, variant = 'login' }) {
           <p>{subtitle}</p>
         </header>
         {children}
-        <Cityscape />
+        <Cityscape auth />
       </section>
     </main>
   )

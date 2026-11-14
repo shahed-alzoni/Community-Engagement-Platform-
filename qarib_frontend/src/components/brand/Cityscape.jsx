@@ -1,15 +1,22 @@
-export function Cityscape() {
+export function Cityscape({ auth = false }) {
   return (
     <svg
-      className="cityscape"
+      className={`cityscape${auth ? ' cityscape--auth' : ''}`}
       viewBox="0 0 520 175"
-      preserveAspectRatio="xMidYMax slice"
+      preserveAspectRatio={auth ? 'none' : 'xMidYMax slice'}
       aria-hidden="true"
     >
-      <circle cx="75" cy="48" r="18" fill="#d7f1fb" />
-      <circle cx="455" cy="37" r="20" fill="#cdebf7" />
-      <path d="M40 72c10-20 28-20 38 0Z" fill="#d9f2fb" />
-      <path d="M370 61c12-22 31-22 43 0Z" fill="#dcf3fb" />
+      <g className="cityscape-clouds">
+        <g className="cityscape-cloud cityscape-cloud--left">
+          <circle cx="75" cy="48" r="18" fill="#d7f1fb" />
+          <path d="M40 72c10-20 28-20 38 0Z" fill="#d9f2fb" />
+        </g>
+        <g className="cityscape-cloud cityscape-cloud--right">
+          <circle cx="455" cy="37" r="20" fill="#cdebf7" />
+          <path d="M370 61c12-22 31-22 43 0Z" fill="#dcf3fb" />
+        </g>
+      </g>
+      <g className="cityscape-buildings-back">
       <g fill="#bde5f3">
         <path d="M164 64h48v88h-48z" />
         <path d="M176 47h25v105h-25z" />
@@ -28,20 +35,23 @@ export function Cityscape() {
         <rect x="320" y="111" width="10" height="21" rx="5" />
         <rect x="342" y="111" width="10" height="21" rx="5" />
       </g>
+      </g>
+      <g className="cityscape-buildings-front">
       <path d="M285 91c15-31 42-31 57 0Z" fill="#a9dcec" />
       <path d="M282 91h63v8h-63z" fill="#a9dcec" />
-      <g fill="#168eac">
+      </g>
+      <g className="cityscape-trees cityscape-trees--back" fill="#168eac">
         <path d="M22 131c0-18 11-37 21-37s20 19 20 37v21H22z" />
         <path d="M445 117c0-28 15-60 27-60s23 32 23 60v35h-50z" />
         <path d="M412 128c0-21 12-43 22-43s19 22 19 43v24h-41z" />
       </g>
-      <g fill="#58bad0">
+      <g className="cityscape-trees cityscape-trees--middle" fill="#58bad0">
         <circle cx="87" cy="123" r="25" />
         <circle cx="118" cy="133" r="23" />
         <circle cx="146" cy="126" r="19" />
         <circle cx="376" cy="132" r="23" />
       </g>
-      <g fill="#086d8f">
+      <g className="cityscape-trees cityscape-trees--front" fill="#086d8f">
         <circle cx="8" cy="143" r="25" />
         <circle cx="55" cy="143" r="23" />
         <circle cx="480" cy="143" r="27" />

@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+qarib_frontend/certs/
 
 # Python virtual environments
 .venv/

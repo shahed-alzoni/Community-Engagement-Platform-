@@ -1,9 +1,10 @@
 import { ArrowLeft, Building2, CalendarDays, Mail, Pencil, Phone, ShieldCheck, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 
 import { AdminLayout } from '../components/admin/AdminLayout'
-import { ApiError, fetchAdminUser } from '../services/authApi'
+import { EditAccountModal } from '../components/admin/EditAccountModal'
+import { ApiError, fetchAdminUser, fetchAvailableOrganizations } from '../services/authApi'
 import '../styles/admin-dashboard.css'
 
 function formatDate(value) {
@@ -12,15 +13,25 @@ function formatDate(value) {
 
 export function AdminUserDetailPage() {
   const { userId } = useParams()
+  const location = useLocation()
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [error, setError] = useState('')
+  const [editing, setEditing] = useState(Boolean(location.state?.openEdit))
+  const [organizations, setOrganizations] = useState([])
 
   useEffect(() => {
     let active = true
     fetchAdminUser(userId).then((result) => active && setUser(result)).catch((requestError) => active && setError(requestError instanceof ApiError ? requestError.message : 'The service is unavailable.'))
     return () => { active = false }
   }, [userId])
+
+  useEffect(() => {
+    if (!editing || user?.role !== 'representative') return
+    let active = true
+    fetchAvailableOrganizations().then((result) => active && setOrganizations(result)).catch((requestError) => active && setError(requestError instanceof ApiError ? requestError.message : 'The service is unavailable.'))
+    return () => { active = false }
+  }, [editing, user?.role])
 
   return (
     <AdminLayout>
@@ -33,7 +44,7 @@ export function AdminUserDetailPage() {
             <section className="detail-hero">
               <div className="detail-avatar">{user.full_name.charAt(0)}</div>
               <div><span>Account details</span><h1>{user.full_name}</h1><p>{user.email}</p></div>
-              <button className="add-account-button" type="button" onClick={() => navigate(`/admin/accounts/${user.id}/edit`)}><Pencil size={17} /> Edit account</button>
+              <button className="add-account-button" type="button" onClick={() => user.role === 'system_admin' ? navigate(`/admin/accounts/${user.id}/edit`) : setEditing(true)}><Pencil size={17} /> Edit account</button>
             </section>
             <section className="detail-grid">
               <article><UserRound /><span>Full name</span><strong>{user.full_name}</strong></article>
@@ -51,6 +62,7 @@ export function AdminUserDetailPage() {
           </>
         ) : null}
       </div>
+      {user && editing && user.role !== 'system_admin' ? <EditAccountModal account={user} organizations={organizations} onClose={() => setEditing(false)} onUpdated={(updated) => { setUser(updated); setEditing(false) }} /> : null}
     </AdminLayout>
   )
 }

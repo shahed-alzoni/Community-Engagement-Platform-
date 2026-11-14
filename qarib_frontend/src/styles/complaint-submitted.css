@@ -1,0 +1,29 @@
+.complaint-submitted-page { max-width: 850px; }
+.complaint-submitted-content { width: min(100%, 570px); margin: 0 auto; text-align: center; }
+.complaint-submitted-check { position: relative; display: grid; place-items: center; width: 122px; height: 122px; margin: 8px auto 24px; border: 16px solid #ffe6e0; border-radius: 50%; background: linear-gradient(145deg,#ff9c86,#fa7256); color: white; box-shadow: 0 14px 30px #f7785840; }
+.complaint-submitted-content h1 { margin: 0 0 12px; color: #07164f; font-size: clamp(2rem, 5vw, 2.7rem); letter-spacing: -.04em; }
+.complaint-submitted-intro { margin: 0 auto 29px; color: #637697; font-size: 1.03rem; line-height: 1.6; }
+.complaint-submitted-card { padding: 25px; border: 1px solid #dfeaf0; border-radius: 20px; background: #fff; box-shadow: 0 14px 38px #163d6410; text-align: left; }
+.complaint-submitted-reference { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 17px; border-bottom: 1px solid #e5edf2; }
+.complaint-submitted-reference > div { display: grid; gap: 3px; }
+.complaint-submitted-reference span { color: #7384a1; }
+.complaint-submitted-reference strong { color: #07164f; font-size: 1.45rem; }
+.complaint-submitted-reference button { display: grid; place-items: center; width: 48px; height: 48px; border: 0; border-radius: 13px; background: #eaf4fc; color: #547197; cursor: pointer; }
+.complaint-submitted-summary { display: flex; align-items: flex-start; gap: 15px; padding: 19px 0; }
+.complaint-submitted-icon { display: grid; place-items: center; flex: 0 0 82px; height: 92px; border-radius: 12px; background: #e8f6fc; color: #067f9e; }
+.complaint-submitted-summary > div { flex: 1; min-width: 0; }
+.complaint-submitted-summary h2 { margin: 3px 0 10px; color: #07164f; font-size: 1.1rem; }
+.complaint-submitted-summary p { display: flex; align-items: center; gap: 7px; margin: 7px 0; color: #6e809b; font-size: .88rem; }
+.complaint-submitted-status { padding: 7px 12px; border-radius: 99px; background: #e7f4fb; color: #1d6691; font-size: .78rem; font-weight: 700; }
+.complaint-submitted-steps { display: grid; grid-template-columns: repeat(3,1fr); padding-top: 7px; }
+.complaint-submitted-steps > div { position: relative; display: grid; justify-items: center; gap: 9px; color: #8191aa; text-align: center; }
+.complaint-submitted-steps > div:not(:last-child)::after { content: ''; position: absolute; top: 16px; left: calc(50% + 19px); width: calc(100% - 38px); height: 3px; background: #dce5ed; }
+.complaint-submitted-steps > div.active:not(:last-child)::after { background: #0caaa9; }
+.complaint-submitted-steps > div > span { display: grid; place-items: center; width: 34px; height: 34px; border: 3px solid #ced9e6; border-radius: 50%; background: #f3f7fa; }
+.complaint-submitted-steps > div.active > span { border-color: #0caaa9; background: #0caaa9; color: #fff; }
+.complaint-submitted-steps small { font-size: .79rem; }
+.complaint-submitted-steps .active small { color: #079a9d; font-weight: 800; }
+.complaint-submitted-track,.complaint-submitted-home { display: block; width: 100%; min-height: 56px; margin-top: 18px; border-radius: 99px; font: inherit; font-weight: 800; cursor: pointer; }
+.complaint-submitted-track { border: 0; background: linear-gradient(105deg,#0796a5,#13b3ae); color: white; box-shadow: 0 9px 22px #0e9eaa25; }
+.complaint-submitted-home { margin-top: 12px; border: 1px solid #7387a7; background: transparent; color: #07164f; }
+@media(max-width:600px) { .complaint-submitted-page { padding: 26px 20px 45px; } .complaint-submitted-check { width: 108px; height: 108px; margin-top: 0; } .complaint-submitted-intro { font-size: .9rem; } .complaint-submitted-card { padding: 18px; } .complaint-submitted-icon { flex-basis: 62px; height: 75px; } .complaint-submitted-summary { gap: 10px; } .complaint-submitted-status { padding: 6px 8px; } }

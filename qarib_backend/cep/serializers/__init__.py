@@ -8,8 +8,12 @@ from .admin_user_management import (
     AvailableOrganizationSerializer,
 )
 from .login import LoginSerializer
+from .email_verification import EmailChangeConfirmSerializer, EmailChangeRequestSerializer
+from .logout import LogoutSerializer
 from .password_reset import PasswordResetConfirmSerializer, PasswordResetRequestSerializer
-from .registration import CitizenRegistrationSerializer
+from .password_change import PasswordChangeSerializer
+from .complaint import ComplaintCreateSerializer, ComplaintSerializer
+from .registration import CitizenRegistrationConfirmSerializer, CitizenRegistrationResendSerializer, CitizenRegistrationSerializer
 from .representative_login import (
     RepresentativeInitialPasswordChangeSerializer,
     RepresentativeLoginSerializer,
@@ -25,8 +29,16 @@ __all__ = [
     "AdminUserCreateSerializer",
     "AvailableOrganizationSerializer",
     "CitizenRegistrationSerializer",
+    "CitizenRegistrationConfirmSerializer",
+    "CitizenRegistrationResendSerializer",
+    "EmailChangeConfirmSerializer",
+    "EmailChangeRequestSerializer",
     "LoginSerializer",
+    "LogoutSerializer",
     "PasswordResetConfirmSerializer",
+    "PasswordChangeSerializer",
+    "ComplaintCreateSerializer",
+    "ComplaintSerializer",
     "PasswordResetRequestSerializer",
     "RepresentativeInitialPasswordChangeSerializer",
     "RepresentativeLoginSerializer",

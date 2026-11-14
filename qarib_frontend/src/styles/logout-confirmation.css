@@ -1,0 +1,11 @@
+.logout-confirmation-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(5,22,54,.58);backdrop-filter:blur(5px)}
+.logout-confirmation{width:min(420px,100%);padding:30px;border-radius:22px;color:#0b1d50;background:#fff;box-shadow:0 28px 70px rgba(0,20,50,.26)}
+.logout-confirmation-heading{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.logout-confirmation-icon{width:48px;height:48px;flex:0 0 48px;display:grid;place-items:center;border-radius:14px;color:#087e92;background:#e5f7f8}
+.logout-confirmation h2{margin:0;font-size:1.45rem}
+.logout-confirmation p{margin:0;color:#61758f;line-height:1.5}
+.logout-confirmation-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:26px}
+.logout-confirmation-actions button{min-height:44px;padding:0 15px;border:1px solid #d8e5ec;border-radius:11px;color:#365474;background:#fff;font:inherit;font-weight:700;cursor:pointer}
+.logout-confirmation-actions button:last-child{border-color:transparent;color:#fff;background:linear-gradient(110deg,#075578,#08aaa8)}
+.logout-confirmation-actions button:focus-visible{outline:3px solid #74cdd0;outline-offset:2px}
+@media(max-width:460px){.logout-confirmation-actions{flex-direction:column-reverse}.logout-confirmation-actions button{width:100%}}

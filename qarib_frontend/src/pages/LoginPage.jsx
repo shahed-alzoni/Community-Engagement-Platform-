@@ -59,8 +59,8 @@ export function LoginPage() {
   return (
     <AuthLayout title="Welcome back" subtitle="Log in to continue">
       <form className="auth-form auth-form--login" onSubmit={handleSubmit} noValidate>
-        {location.state?.registered ? (
-          <div className="form-message form-message--success">Account created. You can log in now.</div>
+        {location.state?.logoutFailed ? (
+          <div className="form-message form-message--error">Signed out on this device, but server sign-out could not be confirmed.</div>
         ) : null}
         <FormField
           icon={Mail}

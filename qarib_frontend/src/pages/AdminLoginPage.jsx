@@ -1,6 +1,6 @@
 import { Mail, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 
 import { AuthLayout } from '../components/auth/AuthLayout'
 import { FormField } from '../components/auth/FormField'
@@ -15,6 +15,7 @@ export function AdminLoginPage() {
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
 
   function updateField(event) {
     const { name, value } = event.target
@@ -59,6 +60,7 @@ export function AdminLoginPage() {
   return (
     <AuthLayout title="Admin portal" subtitle="System administrator access only">
       <form className="auth-form auth-form--login" onSubmit={handleSubmit} noValidate>
+        {location.state?.logoutFailed ? <div className="form-message form-message--error">Signed out on this device, but server sign-out could not be confirmed.</div> : null}
         <div className="role-badge"><ShieldCheck aria-hidden="true" size={18} /> System Admin</div>
         <FormField
           icon={Mail}

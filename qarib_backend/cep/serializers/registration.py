@@ -3,7 +3,6 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from cep.models import User
-from cep.services import CitizenRegistrationService
 
 
 class CitizenRegistrationSerializer(serializers.ModelSerializer):
@@ -58,5 +57,17 @@ class CitizenRegistrationSerializer(serializers.ModelSerializer):
             )
         return attrs
 
-    def create(self, validated_data):
-        return CitizenRegistrationService.register(**validated_data)
+
+class CitizenRegistrationConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.RegexField(regex=r"^\d{6}$")
+
+    def validate_email(self, value):
+        return value.strip().lower()
+
+
+class CitizenRegistrationResendSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return value.strip().lower()

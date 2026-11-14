@@ -15,7 +15,7 @@ from cep.serializers import (
     AdminUserCreateSerializer,
     AvailableOrganizationSerializer,
 )
-from cep.services import AdminUserManagementService
+from cep.services import AdminUserManagementService, EmailVerificationService
 
 
 class AdminUserCreateView(generics.CreateAPIView):
@@ -46,7 +46,7 @@ class AdminUserListView(generics.ListAPIView):
     def get_queryset(self):
         assignments = OrganizationRepresentativeAssignment.objects.select_related(
             "organization"
-        ).order_by("-assigned_at")
+        ).order_by("-assigned_at", "-pk")
         queryset = User.objects.prefetch_related(
             Prefetch(
                 "organization_assignments",
@@ -114,8 +114,17 @@ class AdminUserDetailUpdateView(generics.RetrieveUpdateAPIView):
         user = self.get_object()
         serializer = AdminUserUpdateSerializer(user, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
+        new_email = serializer.validated_data.get("email")
+        verification_required = user.pk == request.user.pk and new_email is not None and new_email != user.email
+        if verification_required:
+            EmailVerificationService.request_email_change(user=user, new_email=new_email)
+            serializer.validated_data.pop("email")
         user = serializer.save()
-        return Response(AdminUserDetailSerializer(user).data, status=status.HTTP_200_OK)
+        data = AdminUserDetailSerializer(user).data
+        if verification_required:
+            data["verification_required"] = True
+            data["pending_email"] = new_email
+        return Response(data, status=status.HTTP_202_ACCEPTED if verification_required else status.HTTP_200_OK)
 
 
 class AdminUserStatusView(APIView):

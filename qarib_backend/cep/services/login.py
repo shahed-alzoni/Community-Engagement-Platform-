@@ -15,9 +15,12 @@ class LoginService:
         if user is None or not user.is_active or (required_role and user.role != required_role):
             raise AuthenticationFailed(cls.INVALID_CREDENTIALS_MESSAGE)
 
+        return cls.issue_tokens(user)
+
+    @staticmethod
+    def issue_tokens(user) -> dict:
         refresh = RefreshToken.for_user(user)
         update_last_login(None, user)
-
         return {
             "access": str(refresh.access_token),
             "refresh": str(refresh),

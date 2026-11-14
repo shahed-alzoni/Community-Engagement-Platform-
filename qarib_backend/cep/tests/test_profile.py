@@ -1,3 +1,6 @@
+import re
+
+from django.core import mail
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -27,9 +30,13 @@ class ProfileApiTests(APITestCase):
         self.assertEqual(detail.status_code, status.HTTP_200_OK)
         self.assertEqual(detail.data["role"], User.Role.CITIZEN)
         self.assertIsNone(detail.data["organization_name"])
-        self.assertEqual(updated.status_code, status.HTTP_200_OK)
+        self.assertEqual(updated.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(updated.data["full_name"], "Updated Citizen")
-        self.assertEqual(updated.data["email"], "updated@example.com")
+        self.assertEqual(updated.data["email"], "citizen-profile@example.com")
+        code = re.search(r"\b\d{6}\b", mail.outbox[-1].body).group()
+        confirmed = self.client.post(reverse("cep:email-change-confirm"), {"code": code}, format="json")
+        self.assertEqual(confirmed.status_code, status.HTTP_200_OK)
+        self.assertEqual(confirmed.data["email"], "updated@example.com")
 
     def test_representative_sees_organization_but_cannot_update_it_or_role(self):
         organization = Organization.objects.create(name="Ministry of Water")
@@ -51,10 +58,26 @@ class ProfileApiTests(APITestCase):
         )
 
         self.assertEqual(detail.data["organization_name"], "Ministry of Water")
+        self.assertEqual(detail.data["organization_display_name"], "Ministry of Water")
         self.assertEqual(updated.status_code, status.HTTP_200_OK)
         representative.refresh_from_db()
         self.assertEqual(representative.role, User.Role.ORGANIZATION_REPRESENTATIVE)
         self.assertEqual(representative.active_organization_assignment.organization, organization)
+
+        renamed = self.client.patch(self.url, {"organization_display_name": "Water Services"}, format="json")
+        self.assertEqual(renamed.status_code, status.HTTP_200_OK)
+        self.assertEqual(renamed.data["organization_display_name"], "Water Services")
+        organization.refresh_from_db()
+        self.assertEqual(organization.name, "Ministry of Water")
+        self.assertEqual(organization.display_name, "Water Services")
+
+        email_request = self.client.patch(self.url, {"email": "new-rep@example.com"}, format="json")
+        self.assertEqual(email_request.status_code, status.HTTP_202_ACCEPTED)
+        representative.refresh_from_db()
+        self.assertEqual(representative.email, "rep-profile@example.com")
+        code = re.search(r"\b\d{6}\b", mail.outbox[-1].body).group()
+        confirmed = self.client.post(reverse("cep:email-change-confirm"), {"code": code}, format="json")
+        self.assertEqual(confirmed.data["email"], "new-rep@example.com")
 
     def test_duplicate_email_and_phone_are_rejected(self):
         other = User.objects.create_user(
@@ -70,6 +93,12 @@ class ProfileApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", response.data)
         self.assertIn("phone_number", response.data)
+
+    def test_citizen_cannot_change_organization_display_name(self):
+        self.client.force_authenticate(self.citizen)
+        response = self.client.patch(self.url, {"organization_display_name": "Other name"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("organization_display_name", response.data)
 
     def test_admin_and_unauthenticated_user_cannot_use_portal_profile(self):
         admin = User.objects.create_superuser(

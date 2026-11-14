@@ -1,8 +1,11 @@
+import re
+
+from django.core import mail
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from cep.models import Organization, OrganizationRepresentativeAssignment, User
+from cep.models import Complaint, Organization, OrganizationRepresentativeAssignment, User
 
 
 class AdminUserManagementApiTests(APITestCase):
@@ -102,11 +105,18 @@ class AdminUserManagementApiTests(APITestCase):
             format="json",
         )
         old_user = User.objects.get(pk=create_response.data["id"])
+        citizen = User.objects.create_user(full_name="Reporter", email="reporter@example.com", phone_number="0990000088", password=self.password)
+        organization = Organization.objects.get(normalized_name="ministry of electricity")
+        open_complaint = Complaint.objects.create(citizen=citizen, organization=organization, title="Open issue", description="Needs work", latitude="33.513800", longitude="36.276500", assigned_representative=old_user, status=Complaint.Status.IN_PROGRESS)
+        resolved_complaint = Complaint.objects.create(citizen=citizen, organization=organization, title="Closed issue", description="Already resolved", latitude="33.513800", longitude="36.276500", assigned_representative=old_user, status=Complaint.Status.RESOLVED)
 
         deactivate_response = self.client.patch(
             reverse("cep:admin-user-deactivate", kwargs={"user_id": old_user.pk}),
             format="json",
         )
+        self.assertEqual(deactivate_response.status_code, status.HTTP_200_OK)
+        open_complaint.refresh_from_db()
+        self.assertIsNone(open_complaint.assigned_representative_id)
         replacement_response = self.client.post(
             self.create_url,
             self.payload(
@@ -118,7 +128,6 @@ class AdminUserManagementApiTests(APITestCase):
             format="json",
         )
 
-        self.assertEqual(deactivate_response.status_code, status.HTTP_200_OK)
         old_user.refresh_from_db()
         self.assertFalse(old_user.is_active)
         old_assignment = old_user.organization_assignments.get()
@@ -126,6 +135,10 @@ class AdminUserManagementApiTests(APITestCase):
         self.assertIsNone(old_assignment.active_organization)
         self.assertIsNone(old_assignment.active_representative)
         self.assertEqual(replacement_response.status_code, status.HTTP_201_CREATED)
+        open_complaint.refresh_from_db()
+        resolved_complaint.refresh_from_db()
+        self.assertEqual(open_complaint.assigned_representative_id, replacement_response.data["id"])
+        self.assertEqual(resolved_complaint.assigned_representative_id, old_user.pk)
         self.assertEqual(Organization.objects.count(), 1)
         self.assertEqual(OrganizationRepresentativeAssignment.objects.count(), 2)
         self.assertEqual(
@@ -200,7 +213,7 @@ class AdminUserManagementApiTests(APITestCase):
         detail = self.client.get(url)
         updated = self.client.patch(
             url,
-            {"full_name": "Updated Name", "phone_number": "0990000005"},
+            {"full_name": "Updated Name", "email": "updated-details@example.com", "phone_number": "0990000005"},
             format="json",
         )
 
@@ -209,9 +222,9 @@ class AdminUserManagementApiTests(APITestCase):
         self.assertEqual(updated.status_code, status.HTTP_200_OK)
         self.assertEqual(updated.data["full_name"], "Updated Name")
         self.assertEqual(updated.data["phone_number"], "0990000005")
-        self.assertEqual(updated.data["email"], "details@example.com")
+        self.assertEqual(updated.data["email"], "updated-details@example.com")
 
-    def test_admin_can_change_only_own_email_address(self):
+    def test_admin_can_change_citizen_and_representative_email_addresses(self):
         citizen = User.objects.create_user(
             full_name="Citizen",
             email="protected@example.com",
@@ -224,16 +237,57 @@ class AdminUserManagementApiTests(APITestCase):
         admin_response = self.client.patch(
             admin_url, {"email": " New.Admin@Qarib.Local "}, format="json"
         )
-        citizen_response = self.client.patch(
-            citizen_url, {"email": "changed@example.com"}, format="json"
+        representative_response = self.client.post(
+            self.create_url,
+            self.payload(
+                email="representative@example.com",
+                role=User.Role.ORGANIZATION_REPRESENTATIVE,
+                organization_name="Water Organization",
+            ),
+            format="json",
+        )
+        representative_url = reverse(
+            "cep:admin-user-detail-update", kwargs={"user_id": representative_response.data["id"]}
+        )
+        citizen_response = self.client.patch(citizen_url, {"email": " Changed@Example.com "}, format="json")
+        representative_update = self.client.patch(
+            representative_url, {"email": "new-representative@example.com"}, format="json"
         )
 
-        self.assertEqual(admin_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(admin_response.data["email"], "new.admin@qarib.local")
-        self.assertEqual(citizen_response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("email", citizen_response.data)
+        self.assertEqual(admin_response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(admin_response.data["email"], self.admin.email)
+        code = re.search(r"\b\d{6}\b", mail.outbox[-1].body).group()
+        confirmed = self.client.post(reverse("cep:email-change-confirm"), {"code": code}, format="json")
+        self.assertEqual(confirmed.status_code, status.HTTP_200_OK)
+        self.assertEqual(confirmed.data["email"], "new.admin@qarib.local")
+        self.assertEqual(citizen_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(citizen_response.data["email"], "changed@example.com")
+        self.assertEqual(representative_update.status_code, status.HTTP_200_OK)
+        self.assertEqual(representative_update.data["email"], "new-representative@example.com")
         citizen.refresh_from_db()
-        self.assertEqual(citizen.email, "protected@example.com")
+        self.assertEqual(citizen.email, "changed@example.com")
+
+    def test_admin_cannot_reuse_inactive_account_email(self):
+        inactive = User.objects.create_user(
+            full_name="Inactive", email="inactive-email@example.com",
+            phone_number="0990000007", password=self.password,
+        )
+        inactive.is_active = False
+        inactive.save(update_fields=["is_active"])
+        citizen = User.objects.create_user(
+            full_name="Citizen", email="citizen-email@example.com",
+            phone_number="0990000008", password=self.password,
+        )
+        url = reverse("cep:admin-user-detail-update", kwargs={"user_id": citizen.pk})
+
+        response = self.client.patch(
+            url, {"email": "INACTIVE-EMAIL@example.com"}, format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+        citizen.refresh_from_db()
+        self.assertEqual(citizen.email, "citizen-email@example.com")
 
     def test_editing_representative_organization_preserves_assignment_history(self):
         created = self.client.post(

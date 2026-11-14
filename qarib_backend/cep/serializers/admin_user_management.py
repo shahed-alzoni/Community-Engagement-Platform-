@@ -113,7 +113,7 @@ class AdminManagedUserSerializer(serializers.ModelSerializer):
             return user.prefetched_assignments[0] if user.prefetched_assignments else None
         return (
             user.organization_assignments.select_related("organization")
-            .order_by("-assigned_at")
+            .order_by("-assigned_at", "-pk")
             .first()
         )
 
@@ -147,7 +147,7 @@ class AdminUserDetailSerializer(AdminManagedUserSerializer):
 
     def get_assignment_history(self, user):
         assignments = user.organization_assignments.select_related("organization").order_by(
-            "-assigned_at"
+            "-assigned_at", "-pk"
         )
         return [
             {
@@ -182,8 +182,6 @@ class AdminUserUpdateSerializer(serializers.ModelSerializer):
         fields = ("full_name", "email", "phone_number", "organization_id")
 
     def validate_email(self, value: str) -> str:
-        if self.instance.role != User.Role.SYSTEM_ADMIN:
-            raise serializers.ValidationError("Email address cannot be changed for this account.")
         normalized_email = value.strip().lower()
         if User.objects.exclude(pk=self.instance.pk).filter(email=normalized_email).exists():
             raise serializers.ValidationError("This email address is already in use.")

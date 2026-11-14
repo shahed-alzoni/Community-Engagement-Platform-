@@ -56,14 +56,15 @@ export function RegisterPage() {
     setErrors({})
     setMessage('')
     try {
-      await registerCitizen({
+      const result = await registerCitizen({
         full_name: form.full_name.trim(),
         email: form.email.trim(),
         phone_number: form.phone_number.trim(),
         password: form.password,
         password_confirm: form.password_confirm,
       })
-      navigate('/login', { state: { registered: true }, replace: true })
+      sessionStorage.setItem('qarib.pendingVerification', JSON.stringify({ purpose: 'registration', email: result.email }))
+      navigate('/verify-email', { replace: true })
     } catch (error) {
       if (error instanceof ApiError) {
         setErrors(error.errors)

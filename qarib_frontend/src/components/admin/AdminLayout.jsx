@@ -4,17 +4,21 @@ import { useNavigate } from 'react-router'
 
 import { Cityscape } from '../brand/Cityscape'
 import { QaribLogo } from '../brand/QaribLogo'
+import { ConfirmLogoutDialog } from '../auth/ConfirmLogoutDialog'
+import { logoutCurrentSession } from '../../services/authApi'
 
 export function AdminLayout({ children }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const navigate = useNavigate()
   const storedUser = JSON.parse(sessionStorage.getItem('qarib.user') ?? '{}')
 
-  function logout() {
-    sessionStorage.removeItem('qarib.accessToken')
-    sessionStorage.removeItem('qarib.refreshToken')
-    sessionStorage.removeItem('qarib.user')
-    navigate('/admin/login', { replace: true })
+  async function logout() {
+    setConfirmLogout(false)
+    setLoggingOut(true)
+    const serverEnded = await logoutCurrentSession()
+    navigate('/admin/login', { state: { logoutFailed: !serverEnded }, replace: true })
   }
 
   return (
@@ -30,7 +34,7 @@ export function AdminLayout({ children }) {
         <nav aria-label="Admin navigation">
           <span className="admin-nav-item admin-nav-item--active"><Users size={20} /> Manage accounts</span>
         </nav>
-        <button className="admin-logout" type="button" onClick={logout}><LogOut size={20} /> Log out</button>
+        <button className="admin-logout" type="button" onClick={() => setConfirmLogout(true)} disabled={loggingOut}><LogOut size={20} /> {loggingOut ? 'Logging out…' : 'Log out'}</button>
         <Cityscape />
       </aside>
       <main className="admin-main">
@@ -43,6 +47,7 @@ export function AdminLayout({ children }) {
         </div>
         {children}
       </main>
+      {confirmLogout ? <ConfirmLogoutDialog onCancel={() => setConfirmLogout(false)} onConfirm={logout} /> : null}
     </div>
   )
 }

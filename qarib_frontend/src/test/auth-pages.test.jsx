@@ -1,9 +1,13 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import App from '../App'
+
+vi.mock('../components/complaints/ComplaintMap', () => ({
+  ComplaintMap: ({ onPick, readOnly }) => readOnly ? <div>Map preview</div> : <button type="button" onClick={() => onPick?.(33.5138, 36.2765)}>Choose map point</button>,
+}))
 
 function renderAt(path) {
   return render(
@@ -16,6 +20,7 @@ function renderAt(path) {
 describe('authentication pages', () => {
   afterEach(() => {
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
     sessionStorage.clear()
   })
 
@@ -28,6 +33,310 @@ describe('authentication pages', () => {
     expect(screen.getByPlaceholderText(/Mobile number/)).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Confirm password')).toBeInTheDocument()
     expect(screen.queryByText(/I agree to the/i)).not.toBeInTheDocument()
+  })
+
+  it('changes the signed-in citizen password after checking the current one', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'access-token')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 3, role: 'citizen', full_name: 'Test Citizen' }))
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => ({
+      ok: true,
+      json: async () => url.endsWith('/profile/')
+        ? { id: 3, role: 'citizen', full_name: 'Test Citizen', email: 'test@example.com', phone_number: '0991234567' }
+        : { detail: 'Your password was changed successfully.' },
+    }))
+    renderAt('/portal/profile')
+
+    expect(await screen.findByRole('heading', { name: 'Change password' })).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Current password'), 'ExistingStrongPass!2026')
+    await userEvent.type(screen.getByLabelText('New password', { exact: true }), 'DifferentStrongPass!2026')
+    await userEvent.type(screen.getByLabelText('Confirm new password'), 'DifferentStrongPass!2026')
+    await userEvent.click(screen.getByRole('button', { name: 'Change password' }))
+
+    expect(await screen.findByText('Your password was changed successfully.')).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/auth/password-change/', expect.objectContaining({ method: 'POST' }))
+    expect(screen.getByLabelText('Current password')).toHaveValue('')
+  })
+
+  it('submits a citizen complaint and opens its tracking page', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'citizen-access')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 3, role: 'citizen', full_name: 'Test Citizen' }))
+    const complaint = {
+      id: 12, reference: 'QAR-ABC123ABC123', title: 'Water leak', description: 'Leaking pipe beside the school',
+      organization_name: 'Water Organization', status: 'pending', latitude: '33.513800', longitude: '36.276500',
+      location_label: 'Near school', created_at: '2026-11-13T00:00:00Z', photos: [], status_events: [{ status: 'pending', note: '', created_at: '2026-11-13T00:00:00Z' }],
+    }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => ({
+      ok: true,
+      json: async () => url.endsWith('/complaints/organizations/') ? [{ id: 4, name: 'Water Organization' }] : complaint,
+    }))
+    renderAt('/citizen/complaints/new')
+
+    await userEvent.click(await screen.findByRole('radio', { name: 'Water Organization' }))
+    expect(screen.queryByRole('button', { name: 'Choose map point' })).not.toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Compliment title'), complaint.title)
+    await userEvent.type(screen.getByLabelText('Description'), complaint.description)
+    await userEvent.click(screen.getByRole('button', { name: 'Choose', exact: true }))
+    await userEvent.click(screen.getByRole('button', { name: 'Choose map point' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Submit Compliment' }))
+
+    expect(await screen.findByRole('heading', { name: 'Compliment submitted!' })).toBeInTheDocument()
+    expect(screen.getByText('QAR-ABC123ABC123', { exact: false })).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/complaints/', expect.objectContaining({ method: 'POST', body: expect.any(FormData) }))
+    const submitted = fetchMock.mock.calls.find(([url, options]) => url === '/api/v1/complaints/' && options?.method === 'POST')[1].body
+    expect(submitted.get('latitude')).toBe('33.513800')
+    expect(submitted.get('longitude')).toBe('36.276500')
+    await userEvent.click(screen.getByRole('button', { name: 'Track Compliment' }))
+    expect(await screen.findByLabelText('Complaint progress')).toBeInTheDocument()
+  })
+
+  it('sends the selected extra category with its organization', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'citizen-access')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 3, role: 'citizen', full_name: 'Test Citizen' }))
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => ({
+      ok: true,
+      json: async () => url.endsWith('/complaints/organizations/')
+        ? [{ id: 4, name: 'Water', category_id: null }, { id: 4, name: 'Water leak', category_id: 9, image_version: '2026-11-14T10:00:00Z' }]
+        : { id: 12, reference: 'QAR-ABC123ABC123', title: 'Leak', description: 'A pipe is leaking', organization_name: 'Water leak', status: 'pending', latitude: '33.513800', longitude: '36.276500', created_at: '2026-11-14T10:00:00Z', photos: [], status_events: [] },
+    }))
+    renderAt('/citizen/complaints/new')
+
+    await userEvent.click(await screen.findByRole('radio', { name: 'Water leak' }))
+    await userEvent.type(screen.getByLabelText('Compliment title'), 'Leak')
+    await userEvent.type(screen.getByLabelText('Description'), 'A pipe is leaking')
+    await userEvent.click(screen.getByRole('button', { name: 'Choose', exact: true }))
+    await userEvent.click(screen.getByRole('button', { name: 'Choose map point' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Submit Compliment' }))
+
+    expect(await screen.findByText('QAR-ABC123ABC123', { exact: false })).toBeInTheDocument()
+    const submitted = fetchMock.mock.calls.find(([url, options]) => url === '/api/v1/complaints/' && options?.method === 'POST')[1].body
+    expect(submitted.get('organization')).toBe('4')
+    expect(submitted.get('category')).toBe('9')
+  })
+
+  it('shows why current location is unavailable over insecure mobile HTTP', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'citizen-access')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 3, role: 'citizen', full_name: 'Test Citizen' }))
+    vi.stubGlobal('isSecureContext', false)
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => [{ id: 4, name: 'Water Organization' }] })
+    renderAt('/citizen/complaints/new')
+    await userEvent.click(screen.getByRole('button', { name: 'Choose', exact: true }))
+    await userEvent.click(screen.getByRole('button', { name: 'Use my location' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('trusted HTTPS')
+  })
+
+  it('lets the representative open the citizen-selected complaint location', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'representative-access')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 7, role: 'representative', full_name: 'Water Representative', organization_name: 'Water' }))
+    const complaint = { id: 12, reference: 'QAR-ABC123ABC123', title: 'Water leak', description: 'Leaking pipe', organization_name: 'Water', status: 'pending', latitude: '33.513800', longitude: '36.276500', created_at: '2026-11-14T10:00:00Z', photos: [], status_events: [] }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => complaint })
+    renderAt('/representative/complaints/12')
+    const locationButton = await screen.findByRole('button', { name: /View complaint location/ })
+    await userEvent.click(locationButton)
+    expect(screen.getByText('Map preview')).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Complaint location' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Close map' }))
+    expect(screen.queryByRole('dialog', { name: 'Complaint location' })).not.toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/representative/complaints/12/', expect.any(Object))
+  })
+
+  it('requires a rejection reason and updates the representative complaint status', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'representative-access')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 7, role: 'representative', full_name: 'Water Representative', organization_name: 'Water' }))
+    const complaint = { id: 12, reference: 'QAR-ABC123ABC123', title: 'Water leak', description: 'Leaking pipe', organization_name: 'Water', status: 'pending', latitude: '33.513800', longitude: '36.276500', created_at: '2026-11-14T10:00:00Z', photos: [], status_events: [] }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, options) => ({ ok: true, json: async () => options?.method === 'PATCH' ? { ...complaint, status: 'rejected', status_events: [{ status: 'rejected', note: 'Not our responsibility', created_at: '2026-11-14T11:00:00Z' }] } : complaint }))
+    renderAt('/representative/complaints/12')
+    await screen.findByRole('heading', { name: 'Update complaint status' })
+    await userEvent.click(screen.getByRole('combobox', { name: 'New status' }))
+    await userEvent.click(screen.getByRole('option', { name: 'rejected' }))
+    await userEvent.type(screen.getByLabelText('Reason for rejection'), 'Not our responsibility')
+    await userEvent.click(screen.getByRole('button', { name: 'Save status' }))
+    expect(await screen.findByText('Not our responsibility')).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/representative/complaints/12/status/', expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ status: 'rejected', note: 'Not our responsibility' }) }))
+  })
+
+  it('uploads optional solution photos only when resolving a complaint', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'representative-access')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 7, role: 'representative', full_name: 'Water Representative', organization_name: 'Water' }))
+    const complaint = { id: 12, reference: 'QAR-ABC123ABC123', title: 'Water leak', description: 'Leaking pipe', organization_name: 'Water', status: 'in_progress', latitude: '33.513800', longitude: '36.276500', created_at: '2026-11-14T10:00:00Z', photos: [], status_events: [] }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, options) => ({ ok: true, json: async () => options?.method === 'PATCH' ? { ...complaint, status: 'resolved', status_events: [{ status: 'resolved', note: 'Fixed', created_at: '2026-11-14T11:00:00Z', resolution_photos: [] }] } : complaint }))
+    renderAt('/representative/complaints/12')
+    await screen.findByRole('heading', { name: 'Update complaint status' })
+    expect(screen.queryByLabelText('Add solution photos')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('combobox', { name: 'New status' }))
+    await userEvent.click(screen.getByRole('option', { name: 'resolved' }))
+    const image = new File(['\x89PNG\r\n\x1a\n'], 'solution.png', { type: 'image/png' })
+    await userEvent.upload(screen.getByLabelText('Add solution photos'), image)
+    expect(await screen.findByAltText('solution.png')).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Note (optional)'), 'Fixed')
+    await userEvent.click(screen.getByRole('button', { name: 'Save status' }))
+    expect(await screen.findByText('Fixed')).toBeInTheDocument()
+    const upload = fetchMock.mock.calls.find(([url, options]) => url === '/api/v1/representative/complaints/12/status/' && options?.method === 'PATCH')[1].body
+    expect(upload).toBeInstanceOf(FormData)
+    expect(upload.get('status')).toBe('resolved')
+    expect(upload.getAll('resolution_photos')).toHaveLength(1)
+  })
+
+  it('places the current-location coordinates into the complaint form', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'citizen-access')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 3, role: 'citizen', full_name: 'Test Citizen' }))
+    vi.stubGlobal('isSecureContext', true)
+    const originalGeolocation = Object.getOwnPropertyDescriptor(navigator, 'geolocation')
+    Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { getCurrentPosition: (success) => success({ coords: { latitude: 33.5138, longitude: 36.2765 } }) } })
+    try {
+      const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => ({ ok: true, json: async () => url.endsWith('/complaints/organizations/') ? [{ id: 4, name: 'Water Organization' }] : { id: 12, reference: 'QAR-ABC123ABC123', title: 'Water leak', description: 'Leaking pipe', organization_name: 'Water Organization', status: 'pending', latitude: '33.513800', longitude: '36.276500', created_at: '2026-11-13T00:00:00Z', photos: [], status_events: [] } }))
+      renderAt('/citizen/complaints/new')
+      await userEvent.click(await screen.findByRole('radio', { name: 'Water Organization' }))
+      await userEvent.type(screen.getByLabelText('Compliment title'), 'Water leak')
+      await userEvent.type(screen.getByLabelText('Description'), 'Leaking pipe')
+      await userEvent.click(screen.getByRole('button', { name: 'Choose', exact: true }))
+      await userEvent.click(screen.getByRole('button', { name: 'Use my location' }))
+      expect(await screen.findByText('33.51380, 36.27650')).toBeInTheDocument()
+      await userEvent.click(screen.getByRole('button', { name: 'Submit Compliment' }))
+      const submitted = fetchMock.mock.calls.find(([url, options]) => url === '/api/v1/complaints/' && options?.method === 'POST')[1].body
+      expect(submitted.get('latitude')).toBe('33.513800')
+      expect(submitted.get('longitude')).toBe('36.276500')
+    } finally {
+      if (originalGeolocation) Object.defineProperty(navigator, 'geolocation', originalGeolocation)
+      else delete navigator.geolocation
+    }
+  })
+
+  it('refreshes an expired session before submitting the complaint', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'expired-access')
+    sessionStorage.setItem('qarib.refreshToken', 'valid-refresh')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 3, role: 'citizen', full_name: 'Test Citizen' }))
+    const complaint = { id: 12, reference: 'QAR-ABC123ABC123', title: 'Water leak', description: 'Leaking pipe', organization_name: 'Water Organization', status: 'pending', latitude: '33.513800', longitude: '36.276500', created_at: '2026-11-13T00:00:00Z', photos: [], status_events: [] }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, options) => {
+      if (url.endsWith('/complaints/organizations/')) return { ok: true, json: async () => [{ id: 4, name: 'Water Organization' }] }
+      if (url.endsWith('/auth/token/refresh/')) return { ok: true, json: async () => ({ access: 'new-access' }) }
+      if (url.endsWith('/complaints/') && options?.method === 'POST' && options.headers.Authorization === 'Bearer expired-access') return { ok: false, status: 401, json: async () => ({ detail: 'Given token not valid for any token type' }) }
+      return { ok: true, json: async () => complaint }
+    })
+    renderAt('/citizen/complaints/new')
+    await userEvent.click(await screen.findByRole('radio', { name: 'Water Organization' }))
+    await userEvent.type(screen.getByLabelText('Compliment title'), 'Water leak')
+    await userEvent.type(screen.getByLabelText('Description'), 'Leaking pipe')
+    await userEvent.click(screen.getByRole('button', { name: 'Choose', exact: true }))
+    await userEvent.click(screen.getByRole('button', { name: 'Choose map point' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Submit Compliment' }))
+    expect(await screen.findByText('QAR-ABC123ABC123', { exact: false })).toBeInTheDocument()
+    expect(sessionStorage.getItem('qarib.accessToken')).toBe('new-access')
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/auth/token/refresh/', expect.objectContaining({ method: 'POST' }))
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/complaints/', expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer new-access' }) }))
+  })
+
+  it('previews optional photos and limits selection to three', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'citizen-access')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 3, role: 'citizen', full_name: 'Test Citizen' }))
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => [{ id: 4, name: 'Water Organization' }] })
+    renderAt('/citizen/complaints/new')
+    const photos = ['one.png', 'two.png', 'three.png', 'four.png'].map((name) => new File([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], name, { type: 'image/png' }))
+    await userEvent.upload(screen.getByLabelText('Add up to 3 photos'), photos.slice(0, 2))
+    expect(await screen.findByAltText('one.png')).toBeInTheDocument()
+    expect(await screen.findByAltText('two.png')).toBeInTheDocument()
+    await userEvent.upload(screen.getByLabelText('Add up to 3 photos'), photos.slice(2))
+    expect(screen.getByText('Choose up to 3 JPEG, PNG, or WebP images, 5 MB each.')).toBeInTheDocument()
+    await userEvent.upload(screen.getByLabelText('Add up to 3 photos'), [photos[2]])
+    expect(await screen.findByAltText('three.png')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Add up to 3 photos')).not.toBeInTheDocument()
+  })
+
+  it('requires email verification before creating a citizen session', async () => {
+    const citizen = { id: 9, full_name: 'New Citizen', email: 'new@example.com', role: 'citizen' }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => ({
+      ok: true,
+      json: async () => url.endsWith('/auth/register/')
+        ? { email: citizen.email }
+        : { access: 'new-access', refresh: 'new-refresh', user: citizen },
+    }))
+    renderAt('/register')
+
+    await userEvent.type(screen.getByPlaceholderText('Full name'), citizen.full_name)
+    await userEvent.type(screen.getByPlaceholderText('Email address'), citizen.email)
+    await userEvent.type(screen.getByPlaceholderText(/Mobile number/), '0991234567')
+    await userEvent.type(screen.getByPlaceholderText('Password'), 'StrongPass!2026')
+    await userEvent.type(screen.getByPlaceholderText('Confirm password'), 'StrongPass!2026')
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }))
+
+    expect(await screen.findByRole('heading', { name: 'Verify your email' })).toBeInTheDocument()
+    expect(sessionStorage.getItem('qarib.accessToken')).toBeNull()
+    await userEvent.type(screen.getByRole('textbox', { name: 'Verification code digit 1' }), '123456')
+    await userEvent.click(screen.getByRole('button', { name: 'Verify email' }))
+    expect(await screen.findByRole('heading', { name: 'Welcome back, New' })).toBeInTheDocument()
+    expect(sessionStorage.getItem('qarib.accessToken')).toBe('new-access')
+    expect(sessionStorage.getItem('qarib.refreshToken')).toBe('new-refresh')
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/auth/register/', expect.objectContaining({ method: 'POST' }))
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/auth/register/confirm/', expect.objectContaining({ method: 'POST' }))
+    expect(fetchMock).not.toHaveBeenCalledWith('/api/v1/auth/login/', expect.anything())
+  })
+
+  it.each([
+    ['citizen', '/citizen/home', 'Welcome back'],
+    ['representative', '/representative/home', 'Representative portal'],
+    ['system_admin', '/admin/accounts', 'Admin portal'],
+  ])('revokes the %s refresh token and leaves the portal', async (role, homePath, loginTitle) => {
+    sessionStorage.setItem('qarib.accessToken', 'access-token')
+    sessionStorage.setItem('qarib.refreshToken', 'refresh-token')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 2, full_name: 'Test User', role, organization_name: 'Water' }))
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+      if (url.endsWith('/auth/logout/')) return { ok: true, json: async () => ({}) }
+      if (url.includes('/organizations/')) return { ok: true, json: async () => [] }
+      return { ok: true, json: async () => ({ count: 0, results: [], summary: {} }) }
+    })
+    renderAt(homePath)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Log out' }))
+    expect(screen.getByRole('alertdialog', { name: 'Log out of Qarib?' })).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalledWith('/api/v1/auth/logout/', expect.anything())
+    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'Log out of Qarib?' })).getByRole('button', { name: 'Log out' }))
+
+    expect(await screen.findByRole('heading', { name: loginTitle, exact: role !== 'citizen' })).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/auth/logout/', expect.objectContaining({
+      method: 'POST', body: JSON.stringify({ refresh: 'refresh-token' }),
+    }))
+    expect(sessionStorage.getItem('qarib.accessToken')).toBeNull()
+    expect(sessionStorage.getItem('qarib.refreshToken')).toBeNull()
+  })
+
+  it('clears the local session and warns if server logout fails', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'access-token')
+    sessionStorage.setItem('qarib.refreshToken', 'refresh-token')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 2, full_name: 'Test Citizen', role: 'citizen' }))
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Network unavailable'))
+    renderAt('/citizen/home')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Log out' }))
+    await userEvent.click(within(screen.getByRole('alertdialog', { name: 'Log out of Qarib?' })).getByRole('button', { name: 'Log out' }))
+
+    expect(await screen.findByText('Signed out on this device, but server sign-out could not be confirmed.')).toBeInTheDocument()
+    expect(sessionStorage.getItem('qarib.accessToken')).toBeNull()
+    expect(sessionStorage.getItem('qarib.refreshToken')).toBeNull()
+  })
+
+  it('keeps the citizen signed in when logout confirmation is cancelled', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'access-token')
+    sessionStorage.setItem('qarib.refreshToken', 'refresh-token')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 2, full_name: 'Test Citizen', role: 'citizen' }))
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+    renderAt('/citizen/home')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Log out' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByRole('alertdialog', { name: 'Log out of Qarib?' })).not.toBeInTheDocument()
+    expect(sessionStorage.getItem('qarib.refreshToken')).toBe('refresh-token')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('closes the portal navigation when the mobile backdrop is tapped', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'access-token')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 2, full_name: 'Test Citizen', role: 'citizen' }))
+    renderAt('/citizen/home')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Open navigation' }))
+    expect(screen.getAllByRole('button', { name: 'Close navigation' })[0]).toHaveAttribute('aria-expanded', 'true')
+    await userEvent.click(document.querySelector('.portal-menu-backdrop'))
+    expect(screen.getByRole('button', { name: 'Open navigation' })).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('validates the login form before calling the API', async () => {
@@ -202,8 +511,78 @@ describe('authentication pages', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     expect(await screen.findByText('Your profile was updated successfully.')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Account role')).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/Organization/)).not.toBeInTheDocument()
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/profile/', expect.objectContaining({ method: 'PATCH' }))
+  })
+
+  it('lets a representative upload an organization image from the profile', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'representative-access')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 7, full_name: 'Water Representative', role: 'representative' }))
+    const profile = { id: 7, full_name: 'Water Representative', email: 'water@example.com', phone_number: '0991234567', role: 'representative', organization_id: 4, organization_name: 'Water' }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => ({
+      ok: true,
+      json: async () => url.endsWith('/profile/organization-image/') ? { organization_id: 4, image_version: '2026-11-14T10:00:00Z' } : profile,
+    }))
+    renderAt('/portal/profile')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit Water' }))
+    const image = new File([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], 'water.png', { type: 'image/png' })
+    await userEvent.upload(screen.getByLabelText('Replace image (optional)'), image)
+    await userEvent.click(screen.getByRole('button', { name: 'Save category' }))
+
+    expect(await screen.findByRole('button', { name: 'Edit Water' })).toBeInTheDocument()
+    const upload = fetchMock.mock.calls.find(([url]) => url.endsWith('/profile/organization-image/'))
+    expect(upload[1].body.get('image')).toEqual(image)
+    expect(screen.getByRole('button', { name: 'Edit Water' }).closest('.portal-category-item').querySelector('img')).toHaveAttribute('src', expect.stringContaining('/organizations/4/image/'))
+  })
+
+  it('lets a representative edit the citizen-facing organization name', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'representative-access')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 7, full_name: 'Water Representative', role: 'representative' }))
+    const profile = { id: 7, full_name: 'Water Representative', email: 'water@example.com', phone_number: '0991234567', role: 'representative', organization_id: 4, organization_name: 'Ministry of Water', organization_display_name: 'Ministry of Water' }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, options = {}) => ({
+      ok: true,
+      json: async () => options.method === 'PATCH' ? { ...profile, organization_display_name: 'Water Services' } : profile,
+    }))
+    renderAt('/portal/profile')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit Ministry of Water' }))
+    const displayName = screen.getByLabelText('Category name')
+    expect(displayName).toHaveValue('Ministry of Water')
+    await userEvent.clear(displayName)
+    await userEvent.type(displayName, 'Water Services')
+    await userEvent.click(screen.getByRole('button', { name: 'Save category' }))
+
+    const request = fetchMock.mock.calls.find(([url, options]) => url.endsWith('/profile/') && options?.method === 'PATCH')
+    expect(JSON.parse(request[1].body).organization_display_name).toBe('Water Services')
+  })
+
+  it('adds an extra image-backed category from the representative profile', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'representative-access')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 7, full_name: 'Water Representative', role: 'representative' }))
+    const profile = { id: 7, full_name: 'Water Representative', email: 'water@example.com', phone_number: '0991234567', role: 'representative', organization_id: 4, organization_name: 'Water', organization_display_name: 'Water' }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, options = {}) => ({
+      ok: true,
+      json: async () => url.endsWith('/profile/categories/')
+        ? options.method === 'POST' ? { id: 9, name: 'Water leak', image_version: '2026-11-14T10:00:00Z' } : []
+        : profile,
+    }))
+    renderAt('/portal/profile')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Add category' }))
+    await userEvent.type(screen.getByLabelText('Category name'), 'Water leak')
+    expect(screen.getByLabelText('Category name')).toHaveValue('Water leak')
+    const image = new File([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], 'water.png', { type: 'image/png' })
+    await userEvent.upload(screen.getByLabelText('Category image'), image)
+    expect(screen.getByLabelText('Category image').files).toHaveLength(1)
+    await userEvent.click(screen.getByRole('button', { name: 'Save category' }))
+
+    expect(fetchMock.mock.calls.some(([url, options]) => url.endsWith('/profile/categories/') && options?.method === 'POST')).toBe(true)
+    expect(await screen.findByText('Water leak')).toBeInTheDocument()
+    const request = fetchMock.mock.calls.find(([url, options]) => url.endsWith('/profile/categories/') && options?.method === 'POST')
+    expect(request[1].body.get('name')).toBe('Water leak')
+    expect(request[1].body.get('image')).toEqual(image)
   })
 
   it('opens the admin account creation form from the dashboard', async () => {
@@ -225,6 +604,10 @@ describe('authentication pages', () => {
 
     expect(screen.getByRole('heading', { name: 'Add new account' })).toBeInTheDocument()
     expect(screen.getByLabelText('Account role')).toBeInTheDocument()
+    expect(screen.getByLabelText('Password', { exact: true })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('combobox', { name: 'Account role' }))
+    await userEvent.click(screen.getByRole('option', { name: 'Organization representative' }))
+    expect(screen.getByLabelText('Temporary password')).toBeInTheDocument()
   })
 
   it('keeps account actions visible and hides organization for the citizens filter', async () => {
@@ -263,7 +646,9 @@ describe('authentication pages', () => {
     await userEvent.type(screen.getByLabelText('Full name'), 'Existing Citizen')
     await userEvent.type(screen.getByLabelText('Email address'), 'existing@example.com')
     await userEvent.type(screen.getByLabelText('Mobile number'), '0991234567')
-    await userEvent.type(screen.getByLabelText('Temporary password'), 'StrongPass!2026')
+    expect(screen.getByLabelText('Password', { exact: true })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Temporary password')).not.toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Password', { exact: true }), 'StrongPass!2026')
     await userEvent.click(screen.getByRole('button', { name: 'Create account' }))
 
     expect(await screen.findByText('This field must be unique.')).toBeInTheDocument()
@@ -295,7 +680,8 @@ describe('authentication pages', () => {
   it('opens account editing as a modal over the accounts dashboard', async () => {
     sessionStorage.setItem('qarib.accessToken', 'admin-access-token')
     const citizen = { id: 4, full_name: 'Edit Citizen', email: 'edit@example.com', phone_number: '0991234567', role: 'citizen', organization_name: null, organization_id: null, is_active: true }
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, options = {}) => {
+      if (url.endsWith('/admin/users/4/') && options.method === 'PATCH') return { ok: true, json: async () => ({ ...citizen, email: 'new-edit@example.com' }) }
       if (url.endsWith('/admin/users/4/')) return { ok: true, json: async () => citizen }
       if (url.includes('/organizations/')) return { ok: true, json: async () => [] }
       return { ok: true, json: async () => ({ count: 1, next: null, previous: null, summary: {}, results: [citizen] }) }
@@ -307,6 +693,68 @@ describe('authentication pages', () => {
     expect(screen.getByRole('dialog', { name: 'Edit account' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Manage accounts' })).toBeInTheDocument()
     expect(screen.getByDisplayValue('Edit Citizen')).toBeInTheDocument()
+    const emailInput = screen.getByRole('textbox', { name: 'Email address' })
+    await userEvent.clear(emailInput)
+    await userEvent.type(emailInput, 'new-edit@example.com')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/admin/users/4/', expect.objectContaining({
+      method: 'PATCH',
+      body: expect.stringContaining('"email":"new-edit@example.com"'),
+    }))
+  })
+
+  it.each([
+    ['citizen', null],
+    ['representative', 'Water Organization'],
+  ])('uses the shared edit modal from a %s detail page', async (role, organizationName) => {
+    sessionStorage.setItem('qarib.accessToken', 'admin-access-token')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 1, full_name: 'System Admin', role: 'system_admin' }))
+    const account = { id: 4, full_name: 'Managed User', email: 'old@example.com', phone_number: '0991234567', role, organization_name: organizationName, organization_id: role === 'representative' ? 3 : null, is_active: true, assignment_history: [] }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, options = {}) => {
+      if (url.endsWith('/admin/users/4/') && options.method === 'PATCH') return { ok: true, json: async () => ({ ...account, email: 'new@example.com' }) }
+      if (url.endsWith('/admin/users/4/')) return { ok: true, json: async () => account }
+      if (url.includes('/organizations/')) return { ok: true, json: async () => [] }
+      return { ok: true, json: async () => ({ count: 1, next: null, previous: null, summary: {}, results: [account] }) }
+    })
+    renderAt('/admin/accounts/4')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit account' }))
+    expect(screen.getByRole('dialog', { name: 'Edit account' })).toBeInTheDocument()
+    const emailInput = await screen.findByRole('textbox', { name: 'Email address' })
+    await userEvent.clear(emailInput)
+    await userEvent.type(emailInput, 'new@example.com')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/admin/users/4/', expect.objectContaining({
+      method: 'PATCH',
+      body: expect.stringContaining('"email":"new@example.com"'),
+    }))
+    expect(await screen.findByRole('heading', { name: 'Managed User' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Edit account' })).not.toBeInTheDocument()
+  })
+
+  it('keeps the standalone edit page for the system admin', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'admin-access-token')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 1, full_name: 'System Admin', role: 'system_admin' }))
+    const admin = { id: 1, full_name: 'System Admin', email: 'admin@example.com', phone_number: '0991234567', role: 'system_admin' }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => admin })
+    renderAt('/admin/accounts/1')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit account' }))
+
+    expect(await screen.findByText('Update your administrator profile. Your role remains protected.')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Edit account' })).not.toBeInTheDocument()
+  })
+
+  it('opens the shared modal when visiting an old user edit link', async () => {
+    sessionStorage.setItem('qarib.accessToken', 'admin-access-token')
+    sessionStorage.setItem('qarib.user', JSON.stringify({ id: 1, full_name: 'System Admin', role: 'system_admin' }))
+    const citizen = { id: 4, full_name: 'Managed Citizen', email: 'old@example.com', phone_number: '0991234567', role: 'citizen', organization_name: null, organization_id: null, assignment_history: [] }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => citizen })
+    renderAt('/admin/accounts/4/edit')
+
+    expect(await screen.findByRole('dialog', { name: 'Edit account' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Managed Citizen' })).toBeInTheDocument()
   })
 
   it('opens account details in a standalone admin page', async () => {

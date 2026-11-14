@@ -1,6 +1,6 @@
 import { Building2, Mail } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 
 import { AuthLayout } from '../components/auth/AuthLayout'
 import { FormField } from '../components/auth/FormField'
@@ -14,6 +14,7 @@ export function RepresentativeLoginPage() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
 
   function updateField(event) {
     const { name, value } = event.target
@@ -53,6 +54,7 @@ export function RepresentativeLoginPage() {
   return (
     <AuthLayout title="Representative portal" subtitle="Access your organization workspace">
       <form className="auth-form auth-form--login" onSubmit={submit} noValidate>
+        {location.state?.logoutFailed ? <div className="form-message form-message--error">Signed out on this device, but server sign-out could not be confirmed.</div> : null}
         <div className="role-badge"><Building2 size={18} /> Organization Representative</div>
         <FormField icon={Mail} name="email" type="email" placeholder="Representative email address" autoComplete="email" value={form.email} onChange={updateField} error={errors.email} />
         <PasswordField name="password" placeholder="Password" autoComplete="current-password" value={form.password} onChange={updateField} error={errors.password} />
