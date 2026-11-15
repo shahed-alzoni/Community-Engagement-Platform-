@@ -122,7 +122,7 @@ class CitizenComplaintApiTests(APITestCase):
             photo_url = reverse('cep:citizen-complaint-photo', kwargs={'pk': created.data['id'], 'photo_id': created.data['photos'][0]['id']})
             owner_response = self.client.get(photo_url)
             self.assertEqual(owner_response.status_code, status.HTTP_200_OK)
-            owner_response.close()
+            b''.join(owner_response.streaming_content)
             self.client.force_authenticate(self.other)
             self.assertEqual(self.client.get(photo_url).status_code, status.HTTP_404_NOT_FOUND)
 

@@ -46,7 +46,7 @@ class OrganizationImageTests(APITestCase):
             image_response = self.client.get(self.image_url)
             self.assertEqual(image_response.status_code, status.HTTP_200_OK)
             self.assertEqual(image_response['Content-Type'], 'image/png')
-            image_response.close()
+            b''.join(image_response.streaming_content)
 
     def test_citizen_cannot_upload_and_invalid_image_is_rejected(self):
         self.client.force_authenticate(self.citizen)

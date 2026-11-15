@@ -35,7 +35,7 @@ class OrganizationCategoryTests(APITestCase):
             self.assertEqual(updated.data['name'], 'Water supply')
             image_response = self.client.get(reverse('cep:organization-category-image', kwargs={'pk': category_id}))
             self.assertEqual(image_response.status_code, 200)
-            image_response.close()
+            b''.join(image_response.streaming_content)
 
             self.client.force_authenticate(self.citizen)
             options = self.client.get(reverse('cep:complaint-organizations')).data

@@ -55,7 +55,7 @@ class RepresentativeComplaintInboxTests(APITestCase):
             photo_url = reverse('cep:representative-complaint-photo', kwargs={'pk': water['id'], 'photo_id': water['photos'][0]['id']})
             photo_response = self.client.get(photo_url)
             self.assertEqual(photo_response.status_code, 200)
-            photo_response.close()
+            b''.join(photo_response.streaming_content)
             self.assertEqual(self.client.get(reverse('cep:representative-complaint-detail', kwargs={'pk': roads['id']})).status_code, 404)
 
             self.client.force_authenticate(self.roads_rep)
@@ -147,7 +147,7 @@ class RepresentativeComplaintInboxTests(APITestCase):
             self.assertEqual(len(citizen_detail.data['status_events'][-1]['resolution_photos']), 2)
             citizen_photo = self.client.get(citizen_photo_url)
             self.assertEqual(citizen_photo.status_code, 200)
-            citizen_photo.close()
+            b''.join(citizen_photo.streaming_content)
             other_citizen = User.objects.create_user(full_name='Other', email='other-resolution@example.com', phone_number='0991122306', password='StrongPass!2026')
             self.client.force_authenticate(other_citizen)
             self.assertEqual(self.client.get(citizen_photo_url).status_code, 404)
