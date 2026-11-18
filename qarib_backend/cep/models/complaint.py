@@ -73,6 +73,18 @@ class ComplaintStatusEvent(models.Model):
         ordering = ['created_at', 'id']
 
 
+class ComplaintTransferEvent(models.Model):
+    complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name='transfer_events')
+    from_organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name='+')
+    to_organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name='+')
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='complaint_transfers')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'complaint_transfer_events'
+        ordering = ['created_at', 'id']
+
+
 class ComplaintResolutionPhoto(models.Model):
     status_event = models.ForeignKey(ComplaintStatusEvent, on_delete=models.CASCADE, related_name='resolution_photos')
     file = models.FileField(upload_to=resolution_photo_path)

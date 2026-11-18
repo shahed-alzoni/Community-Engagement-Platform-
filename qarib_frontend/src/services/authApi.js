@@ -235,6 +235,16 @@ export function fetchRepresentativeComplaint(id) {
   return request(`/representative/complaints/${id}/`, { authenticated: true })
 }
 
+export function fetchTransferOrganizations() {
+  return request('/representative/transfer-organizations/', { authenticated: true })
+}
+
+export function transferRepresentativeComplaint(id, organization) {
+  return request(`/representative/complaints/${id}/transfer/`, {
+    method: 'POST', payload: { organization }, authenticated: true,
+  })
+}
+
 export function changeRepresentativeComplaintStatus(id, payload) {
   if (!payload.resolution_photos?.length) {
     return request(`/representative/complaints/${id}/status/`, { method: 'PATCH', payload: { status: payload.status, note: payload.note }, authenticated: true })

@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from rest_framework import serializers
 
-from cep.models import Complaint, ComplaintPhoto, ComplaintResolutionPhoto, ComplaintStatusEvent, Organization, OrganizationCategory
+from cep.models import Complaint, ComplaintPhoto, ComplaintResolutionPhoto, ComplaintStatusEvent, ComplaintTransferEvent, Organization, OrganizationCategory
 
 
 IMAGE_SIGNATURES = {
@@ -46,19 +46,48 @@ class ComplaintStatusEventSerializer(serializers.ModelSerializer):
         fields = ['status', 'note', 'created_at', 'resolution_photos']
 
 
+class ComplaintTransferEventSerializer(serializers.ModelSerializer):
+    from_organization_name = serializers.CharField(source='from_organization.citizen_display_name', read_only=True)
+    to_organization_name = serializers.CharField(source='to_organization.citizen_display_name', read_only=True)
+
+    class Meta:
+        model = ComplaintTransferEvent
+        fields = ['from_organization_name', 'to_organization_name', 'created_at']
+
+
+class ComplaintTransferSerializer(serializers.Serializer):
+    organization = serializers.PrimaryKeyRelatedField(queryset=Organization.objects.all())
+
+
 class ComplaintSerializer(serializers.ModelSerializer):
     organization_name = serializers.SerializerMethodField()
+    organization_image_version = serializers.SerializerMethodField()
+    category_image_version = serializers.SerializerMethodField()
     photos = ComplaintPhotoSerializer(many=True, read_only=True)
     status_events = ComplaintStatusEventSerializer(many=True, read_only=True)
+    transfer_events = serializers.SerializerMethodField()
+
+    def get_transfer_events(self, complaint):
+        request = self.context.get('request')
+        if not request or request.user.role != 'representative':
+            return []
+        return ComplaintTransferEventSerializer(complaint.transfer_events.all(), many=True).data
 
     def get_organization_name(self, complaint):
         return complaint.category_name_at_submission or (complaint.category.name if complaint.category_id else complaint.organization.citizen_display_name)
+
+    def get_organization_image_version(self, complaint):
+        return complaint.organization.updated_at.isoformat() if complaint.organization.image else None
+
+    def get_category_image_version(self, complaint):
+        return complaint.category.updated_at.isoformat() if complaint.category_id and complaint.category.image else None
 
     class Meta:
         model = Complaint
         fields = [
             'id', 'reference', 'title', 'description', 'organization', 'category', 'organization_name',
-            'location_label', 'latitude', 'longitude', 'status', 'photos', 'status_events',
+            'organization_image_version', 'category_image_version',
+            'location_label', 'latitude', 'longitude', 'status', 'photos', 'status_events', 'transfer_events',
             'created_at', 'updated_at',
         ]
 

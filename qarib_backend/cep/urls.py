@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from cep.views.organization_image import OrganizationImageUploadView, OrganizationImageView
 from cep.views.organization_category import OrganizationCategoryListCreateView, OrganizationCategoryUpdateView, OrganizationCategoryImageView
-from cep.views.complaint import CitizenResolutionPhotoView, RepresentativeComplaintListView, RepresentativeComplaintDetailView, RepresentativeComplaintPhotoView, RepresentativeComplaintStatusView, RepresentativeResolutionPhotoView
+from cep.views.complaint import CitizenResolutionPhotoView, RepresentativeComplaintListView, RepresentativeComplaintDetailView, RepresentativeComplaintPhotoView, RepresentativeComplaintStatusView, RepresentativeResolutionPhotoView, RepresentativeTransferOrganizationListView, RepresentativeComplaintTransferView
 
 from cep.views import (
     CitizenRegistrationView,
@@ -91,7 +91,9 @@ urlpatterns = [
     path("complaints/<int:pk>/photos/<int:photo_id>/", CitizenComplaintPhotoView.as_view(), name="citizen-complaint-photo"),
     path("complaints/<int:pk>/resolution-photos/<int:photo_id>/", CitizenResolutionPhotoView.as_view(), name="citizen-resolution-photo"),
     path("representative/complaints/", RepresentativeComplaintListView.as_view(), name="representative-complaints"),
+    path("representative/transfer-organizations/", RepresentativeTransferOrganizationListView.as_view(), name="representative-transfer-organizations"),
     path("representative/complaints/<int:pk>/", RepresentativeComplaintDetailView.as_view(), name="representative-complaint-detail"),
+    path("representative/complaints/<int:pk>/transfer/", RepresentativeComplaintTransferView.as_view(), name="representative-complaint-transfer"),
     path("representative/complaints/<int:pk>/status/", RepresentativeComplaintStatusView.as_view(), name="representative-complaint-status"),
     path("representative/complaints/<int:pk>/photos/<int:photo_id>/", RepresentativeComplaintPhotoView.as_view(), name="representative-complaint-photo"),
     path("representative/complaints/<int:pk>/resolution-photos/<int:photo_id>/", RepresentativeResolutionPhotoView.as_view(), name="representative-resolution-photo"),

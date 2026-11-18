@@ -57,7 +57,7 @@ export function OrganizationCategoriesCard({ profile, onPrimaryUpdate }) {
   }
 
   return <section className="portal-profile-card portal-categories-card">
-    <div className="portal-categories-heading"><div><h2>Compliment categories</h2><p>Manage the names and images citizens see when submitting a complaint.</p></div><button type="button" className="portal-category-add" onClick={() => open()}><Plus size={18} /> Add category</button></div>
+    <div className="portal-categories-heading"><div><h2>Complaint categories</h2><p>Manage the names and images citizens see when submitting a complaint.</p></div><button type="button" className="portal-category-add" onClick={() => open()}><Plus size={18} /> Add category</button></div>
     <div className="portal-categories-list">
       <div className="portal-category-item">
         {profile.organization_image_version ? <img src={organizationImageUrl(profile.organization_id, profile.organization_image_version)} alt="" /> : <span className="portal-category-image-placeholder"><ImagePlus size={22} /></span>}

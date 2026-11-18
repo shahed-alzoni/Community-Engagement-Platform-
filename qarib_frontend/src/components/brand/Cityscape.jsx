@@ -1,9 +1,9 @@
-export function Cityscape({ auth = false }) {
+export function Cityscape({ auth = false, banner = false }) {
   return (
     <svg
       className={`cityscape${auth ? ' cityscape--auth' : ''}`}
       viewBox="0 0 520 175"
-      preserveAspectRatio={auth ? 'none' : 'xMidYMax slice'}
+      preserveAspectRatio={auth ? 'none' : banner ? 'xMaxYMax meet' : 'xMidYMax slice'}
       aria-hidden="true"
     >
       <g className="cityscape-clouds">

@@ -134,21 +134,15 @@
 .complaint-location-picker .complaint-card-title p { margin: 0; }
 .complaint-report-form .complaint-photos-section > h2,.complaint-report-form .complaint-location-section > h2 { margin-bottom: 10px; }
 .complaint-report-form .complaint-upload-grid { margin-top: 0; }
-.portal-complaint-bottom-nav { display: none; }
 .complaint-map-thumb { position: relative; overflow: hidden; color: #f4774e; background: linear-gradient(135deg, transparent 43%, rgba(255,255,255,.95) 44% 49%, transparent 50%), repeating-linear-gradient(90deg, #e8eef1 0 18px, #fff 19px 21px, #e8eef1 22px 38px); }
 .complaint-map-thumb svg { filter: drop-shadow(0 2px 3px rgba(23, 49, 73, .25)); }
 .complaint-preview-pin--selected { color: #f4774e; }
 .complaint-map-thumb .complaint-map { width: 100%; height: 100%; border-radius: inherit; pointer-events: none; }
-.complaint-map-thumb .maplibregl-control-container { display: none; }
-.complaint-pin-icon { border: 0; background: transparent; }
-.complaint-pin-shape { position: relative; display: block; width: 32px; height: 32px; transform: rotate(-45deg); border: 3px solid white; border-radius: 50% 50% 50% 0; background: #f27650; box-shadow: 0 5px 15px rgba(24, 53, 78, .3); }
-.complaint-pin-center { position: absolute; top: 8px; left: 8px; width: 10px; height: 10px; border-radius: 50%; background: white; }
 .complaint-location-picker .complaint-map { border: 2px solid #fff; box-shadow: 0 10px 28px rgba(24, 76, 105, .13); }
-.complaint-location-picker .maplibregl-ctrl-group { overflow: hidden; border: 0; border-radius: 12px; box-shadow: 0 3px 12px rgba(24, 76, 105, .17); }
-.complaint-location-picker .maplibregl-ctrl-group button { width: 38px; height: 38px; }
-.complaint-location-picker .maplibregl-ctrl-attrib { font-size: 9px; }
-.complaint-location-picker .leaflet-control-zoom { overflow: hidden; border: 0; border-radius: 12px; box-shadow: 0 3px 12px rgba(24, 76, 105, .17); }
-.complaint-location-picker .leaflet-control-zoom a { color: #17356a; }
+.complaint-map--unavailable { display: grid; place-items: center; padding: 18px; color: #8b3131; background: #fff2f2; text-align: center; }
+.complaint-directions-link { display: inline-block; padding: 6px 4px; color: #086b9b; font-size: .9rem; font-weight: 700; text-decoration: none; }
+.complaint-directions-link:hover { text-decoration: underline; }
+.complaint-location-picker .gm-bundled-control { overflow: hidden; border-radius: 12px; }
 .complaint-map--loading { background: linear-gradient(110deg, #dbeff1, #f0f8f6, #dbeff1); background-size: 200% 100%; animation: complaint-map-loading 1.3s ease-in-out infinite; }
 @keyframes complaint-map-loading { to { background-position: -200% 0; } }
 .complaint-current-location { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: fit-content; padding: 10px 13px; border: 1px solid #c8e6ed; border-radius: 10px; background: #eefafb; color: #08778c; font-weight: 750; cursor: pointer; }
@@ -223,9 +217,6 @@
   .portal-app--complaint .complaint-authority h2 { margin-bottom: 3px; }
   .portal-app--complaint .complaint-content > .complaint-card { margin-top: 10px; }
   .portal-app--complaint .complaint-history { font-size: .84rem; }
-  .portal-complaint-bottom-nav { position: fixed; right: 0; bottom: 0; left: 0; z-index: 35; display: grid; grid-template-columns: repeat(4, 1fr); min-height: 59px; padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid #e3edf2; background: #fff; box-shadow: 0 -6px 20px rgba(20, 63, 93, .06); }
-  .portal-complaint-bottom-nav button { display: grid; justify-items: center; align-content: center; gap: 2px; border: 0; background: transparent; color: #667997; font-size: .69rem; cursor: pointer; }
-  .portal-complaint-bottom-nav button.active { color: #0a969e; font-weight: 800; }
 }
 
 @media (max-width: 760px) {
@@ -285,6 +276,29 @@
 .representative-map-dialog .complaint-map { flex: 1; height: auto; min-height: 0; border-radius: 0; }
 @media (max-width: 600px) { .representative-map-overlay { padding: 12px; } .representative-map-dialog { height: 85dvh; } }
 .representative-status-form { display: grid; gap: 10px; }
+.representative-transfer-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.representative-transfer-card h2 { margin-bottom: 4px; }
+.representative-transfer-card p { margin: 0; }
+.representative-transfer-card > button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: 0 0 auto; padding: 11px 16px; border: 1px solid #0a8d9b; border-radius: 11px; background: #eaf8fa; color: #086e80; font: inherit; font-weight: 750; cursor: pointer; }
+.representative-transfer-card > button:hover { background: #d9f2f4; }
+.representative-transfer-dialog { width: min(440px, 100%); padding: 22px; border-radius: 20px; background: #fff; box-shadow: 0 24px 70px rgba(0,0,0,.22); }
+.representative-transfer-dialog header { display: flex; align-items: center; justify-content: space-between; color: #101d52; }
+.representative-transfer-dialog header div { display: flex; align-items: center; gap: 9px; }
+.representative-transfer-dialog header button { display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 9px; background: #edf4f8; color: #101d52; cursor: pointer; }
+.representative-transfer-dialog form { display: grid; gap: 13px; margin-top: 16px; }
+.representative-transfer-dialog form > label { color: #273f69; font-weight: 750; }
+.representative-transfer-dialog form > p { margin: 0; color: #526784; line-height: 1.5; }
+.representative-transfer-dialog .admin-select { position: relative; }
+.representative-transfer-dialog .admin-select-trigger { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 46px; padding: 0 13px; border: 1px solid #c7dfe8; border-radius: 11px; background: #fff; color: #142754; font: inherit; text-align: left; cursor: pointer; }
+.representative-transfer-dialog .admin-select-menu { position: absolute; z-index: 10; top: calc(100% + 5px); left: 0; width: 100%; max-height: 220px; overflow-y: auto; padding: 6px; border: 1px solid #d7e5ec; border-radius: 11px; background: #fff; box-shadow: 0 15px 35px rgba(20,55,80,.18); }
+.representative-transfer-dialog .admin-select-option { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px; border: 0; border-radius: 7px; background: transparent; color: #17315d; font: inherit; text-align: left; cursor: pointer; }
+.representative-transfer-dialog .admin-select-option:hover, .representative-transfer-dialog .admin-select-option--selected { background: #eaf8fa; }
+.representative-transfer-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 7px; }
+.representative-transfer-actions button { padding: 10px 14px; border: 1px solid #c7dfe8; border-radius: 10px; background: #fff; color: #142754; font: inherit; font-weight: 700; cursor: pointer; }
+.representative-transfer-actions button:last-child { border-color: #098e9d; background: #098e9d; color: #fff; }
+.representative-transfer-actions button:disabled { opacity: .6; cursor: not-allowed; }
+.representative-transfer-notice { padding: 12px 16px; border: 1px solid #b5e5d8; border-radius: 11px; background: #e7f8f0; color: #08785d; font-weight: 700; }
+@media (max-width: 600px) { .representative-transfer-card { align-items: stretch; flex-direction: column; } }
 .representative-status-form label { color: #273f69; font-weight: 700; }
 .representative-status-form textarea { width: 100%; padding: 12px 14px; border: 1px solid #c7dfe8; border-radius: 11px; background: #fff; color: #142754; font: inherit; }
 .representative-status-form .admin-select { position: relative; width: 100%; }

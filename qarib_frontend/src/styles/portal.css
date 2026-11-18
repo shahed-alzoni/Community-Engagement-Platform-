@@ -17,3 +17,14 @@
   .portal-sidebar nav{gap:8px}
   .portal-logout{min-height:56px;padding:14px 18px;border:0;background:transparent;-webkit-text-stroke:.45px #111;paint-order:stroke fill}
 }
+.portal-complaint-bottom-nav{display:none}
+@media(max-width:760px){
+  .portal-app--citizen .portal-content{padding-bottom:calc(94px + env(safe-area-inset-bottom))}
+  .portal-complaint-bottom-nav{position:fixed;right:0;bottom:0;left:0;z-index:35;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));min-height:70px;padding:5px max(8px,env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));border-top:1px solid #e5edf5;background:#fff;box-shadow:0 -8px 24px rgba(28,57,96,.08)}
+  .portal-complaint-bottom-nav button{display:grid;justify-items:center;align-content:center;gap:3px;min-width:0;padding:6px 2px;border:0;border-radius:13px;background:transparent;color:#6d7d9b;font:inherit;font-size:.69rem;cursor:pointer}
+  .portal-complaint-bottom-nav button svg{width:22px;height:22px}
+  .portal-complaint-bottom-nav button.active{background:#eaf8fb;color:#078b92;font-weight:800}
+  .portal-complaint-bottom-nav button:focus-visible{outline:2px solid #0a9da8;outline-offset:-2px}
+  .portal-complaint-bottom-nav--representative{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .portal-app--representative .portal-content{padding-bottom:calc(94px + env(safe-area-inset-bottom))}
+}

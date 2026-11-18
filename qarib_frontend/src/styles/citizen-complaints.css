@@ -1,0 +1,85 @@
+.citizen-complaints-page{max-width:1040px;color:#101e55}
+.citizen-complaints-heading h1{margin:0;font-size:clamp(2rem,3.2vw,2.55rem);letter-spacing:-.045em}
+.citizen-complaints-heading p{margin:6px 0 22px;color:#71809d}
+.citizen-complaints-search-row{display:flex;gap:11px;align-items:stretch}
+.citizen-complaints-search{display:flex;flex:1;align-items:center;gap:11px;min-width:0;min-height:54px;padding:0 16px;border-radius:15px;background:#edf3fd;color:#526b9a}
+.citizen-complaints-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#112458;font:inherit}
+.citizen-complaints-search input::placeholder{color:#7787a4}
+.citizen-complaints-sort{position:relative}
+.citizen-complaints-sort>button{display:grid;place-items:center;width:54px;height:54px;border:0;border-radius:15px;background:#edf3fd;color:#3e6099;cursor:pointer}
+.citizen-complaints-sort-menu{position:absolute;top:calc(100% + 7px);right:0;z-index:5;width:155px;padding:5px;border:1px solid #e1eaf3;border-radius:11px;background:#fff;box-shadow:0 12px 26px #243c6b25}
+.citizen-complaints-sort-menu button{display:block;width:100%;padding:10px;border:0;border-radius:7px;background:transparent;color:#203662;text-align:left;cursor:pointer}
+.citizen-complaints-sort-menu button:hover{background:#edf6fb}
+.citizen-complaints-filters{display:flex;gap:9px;overflow-x:auto;margin:15px 0 18px;padding-bottom:2px;scrollbar-width:none}
+.citizen-complaints-filters::-webkit-scrollbar{display:none}
+.citizen-complaints-filters button{flex:1 0 auto;min-height:42px;padding:0 16px;border:0;border-radius:99px;background:#edf3fd;color:#536588;font:inherit;font-size:.9rem;white-space:nowrap;cursor:pointer}
+.citizen-complaints-filters button.active{background:#071b69;color:#fff}
+.citizen-complaints-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.citizen-complaints-stats>div{display:grid;grid-template-columns:auto 1fr;column-gap:11px;align-content:center;min-height:96px;padding:15px;border:1px solid #e9eff5;border-radius:14px;background:#fff;box-shadow:0 8px 21px #243c6b0b}
+.citizen-complaints-stats .stat-icon{grid-row:1/3;display:grid;place-items:center;width:44px;height:44px;border-radius:50%}
+.citizen-complaints-stats .stat-icon--total{background:#e5f0ff;color:#2469b9}
+.citizen-complaints-stats .stat-icon--active{background:#ffebe9;color:#f07864}
+.citizen-complaints-stats .stat-icon--resolved{background:#dcf7ed;color:#0c9a75}
+.citizen-complaints-stats strong{align-self:end;font-size:1.45rem;line-height:1}
+.citizen-complaints-stats small{align-self:start;margin-top:4px;color:#687a99}
+.citizen-complaints-list-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:24px 0 13px}
+.citizen-complaints-list-heading h2{margin:0;font-size:1.32rem;letter-spacing:-.02em}
+.citizen-complaints-list-heading button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:0 16px;border:0;border-radius:99px;background:#f56959;color:#fff;font:inherit;font-size:.87rem;font-weight:750;white-space:nowrap;cursor:pointer}
+.citizen-complaints-list{display:grid;gap:12px}
+.citizen-complaint-card{display:flex;align-items:stretch;gap:17px;width:100%;min-width:0;padding:14px;border:1px solid #e9eff5;border-radius:17px;background:#fff;box-shadow:0 8px 23px #243c6b0d;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.citizen-complaint-card:hover{border-color:#b6dce5;box-shadow:0 12px 28px #243c6b16}
+.citizen-complaint-card:focus-visible{outline:3px solid #10a7aa;outline-offset:2px}
+.citizen-complaint-thumbnail{display:grid;place-items:center;flex:0 0 125px;min-height:124px;overflow:hidden;border-radius:12px;background:linear-gradient(145deg,#e6f1fb,#d5f0f1);color:#1684a4}
+.citizen-complaint-thumbnail img{width:100%;height:100%;object-fit:cover}
+.citizen-complaint-thumbnail .citizen-complaint-organization-image{width:72%;height:72%;max-height:76px;border-radius:12px;object-fit:contain}
+.citizen-complaint-card-body{display:grid;align-content:start;flex:1;gap:5px;min-width:0}
+.citizen-complaint-card-top{display:flex;align-items:start;justify-content:space-between;gap:10px}
+.citizen-complaint-card-top strong{overflow:hidden;font-size:1.04rem;line-height:1.3;text-overflow:ellipsis}
+.citizen-complaint-card-top .complaint-status{flex:0 0 auto;padding:6px 11px;font-size:.73rem}
+.citizen-complaint-reference{color:#6e7d9c;font-size:.85rem;font-weight:700}
+.citizen-complaint-meta{display:flex;flex-wrap:wrap;gap:7px 16px;margin-top:3px;color:#7483a2;font-size:.82rem}
+.citizen-complaint-meta>span,.citizen-complaint-update{display:inline-flex;align-items:center;gap:5px;min-width:0}
+.citizen-complaint-meta>span:first-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.citizen-complaint-meta svg,.citizen-complaint-update svg{flex:0 0 auto;color:#6d81ab}
+.citizen-complaint-update{overflow:hidden;margin-top:11px;color:#6f7e9c;font-size:.82rem;text-overflow:ellipsis;white-space:nowrap}
+.citizen-complaint-update--rejected{color:#a75c5c}
+.citizen-complaint-chevron{align-self:center;flex:0 0 auto;color:#7281a3}
+.citizen-complaint-progress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-width:440px;margin-top:11px}
+.citizen-complaint-progress>span{position:relative;display:grid;justify-items:center;gap:5px;color:#8493ad;text-align:center}
+.citizen-complaint-progress>span:not(:last-child)::after{content:'';position:absolute;top:12px;left:calc(50% + 14px);width:calc(100% - 28px);height:3px;background:#d6dce6}
+.citizen-complaint-progress>span.done:not(:last-child)::after{background:#0ca8a6}
+.citizen-complaint-progress>span>span{display:grid;place-items:center;width:26px;height:26px;border:2px solid #c5d0e0;border-radius:50%;background:#fff}
+.citizen-complaint-progress>span.done>span,.citizen-complaint-progress>span.current>span{border-color:#0ca8a6;background:#0ca8a6;color:#fff}
+.citizen-complaint-progress>span.current:not(.done)>span{border-color:#1876cb;background:#e6f2ff;color:#1876cb}
+.citizen-complaint-progress small{font-size:.72rem;text-transform:capitalize}
+.citizen-complaints-feedback{padding:35px 16px;border:1px dashed #c5d9e8;border-radius:14px;background:#fff;color:#6e7d9c;text-align:center}
+@media(max-width:760px){
+  .citizen-complaints-page{padding:22px 16px calc(94px + env(safe-area-inset-bottom))!important}
+  .citizen-complaints-heading h1{font-size:1.85rem}
+  .citizen-complaints-heading p{display:none}
+  .citizen-complaints-search-row{margin-top:11px}
+  .citizen-complaints-stats{gap:7px}
+  .citizen-complaints-stats>div{min-height:86px;grid-template-columns:auto 1fr;gap:2px 6px;padding:9px}
+  .citizen-complaints-stats .stat-icon{width:32px;height:32px}
+  .citizen-complaints-stats .stat-icon svg{width:19px;height:19px}
+  .citizen-complaints-stats strong{font-size:1.18rem}
+  .citizen-complaints-stats small{font-size:.71rem}
+  .citizen-complaints-list-heading h2{font-size:1.17rem}
+  .citizen-complaints-list-heading button{padding:0 11px;font-size:.78rem}
+  .citizen-complaint-card{gap:10px;padding:10px}
+  .citizen-complaint-thumbnail{flex-basis:82px;min-height:112px}
+  .citizen-complaint-card-top{flex-wrap:wrap;gap:4px}
+  .citizen-complaint-card-top strong{font-size:.94rem}
+  .citizen-complaint-card-top .complaint-status{padding:4px 8px;font-size:.68rem}
+  .citizen-complaint-reference,.citizen-complaint-meta{font-size:.75rem}
+  .citizen-complaint-meta{gap:3px 9px}
+  .citizen-complaint-chevron{width:15px}
+  .citizen-complaint-progress small{font-size:.61rem}
+  .citizen-complaint-progress>span>span{width:22px;height:22px}
+  .citizen-complaint-progress>span:not(:last-child)::after{top:10px;left:calc(50% + 12px);width:calc(100% - 24px)}
+}
+@media(max-width:380px){
+  .citizen-complaints-stats>div{grid-template-columns:1fr;justify-items:center;text-align:center}
+  .citizen-complaints-stats .stat-icon{grid-row:auto}
+  .citizen-complaint-thumbnail{flex-basis:67px}
+}

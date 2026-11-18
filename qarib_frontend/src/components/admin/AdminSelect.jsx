@@ -1,11 +1,11 @@
 import { Check, ChevronDown } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 
-export function AdminSelect({ ariaLabel, value, options, onChange, invalid = false, disabled = false }) {
+export function AdminSelect({ ariaLabel, value, options, onChange, invalid = false, disabled = false, displayLabel }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
   const listId = useId()
-  const selected = options.find((option) => String(option.value) === String(value)) ?? options[0]
+  const selected = options.find((option) => String(option.value) === String(value)) ?? (displayLabel ? { label: displayLabel } : options[0])
 
   useEffect(() => {
     function closeOnOutsideClick(event) {

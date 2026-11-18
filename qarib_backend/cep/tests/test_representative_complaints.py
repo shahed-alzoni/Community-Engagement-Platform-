@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from cep.models import Complaint, Organization, OrganizationCategory, OrganizationRepresentativeAssignment, User
+from cep.models import Complaint, ComplaintTransferEvent, Organization, OrganizationCategory, OrganizationRepresentativeAssignment, User
 
 
 PNG = b'\x89PNG\r\n\x1a\n' + b'\x00' * 20
@@ -102,6 +102,45 @@ class RepresentativeComplaintInboxTests(APITestCase):
         self.client.force_authenticate(self.citizen)
         detail = self.client.get(reverse('cep:citizen-complaint-detail', kwargs={'pk': created['id']}))
         self.assertEqual([event['status'] for event in detail.data['status_events']], ['pending', 'in_progress', 'resolved'])
+
+    def test_transfer_moves_open_complaint_and_preserves_submission_history(self):
+        created = self.submit(self.water, self.water_category)
+        transfer_url = reverse('cep:representative-complaint-transfer', kwargs={'pk': created['id']})
+        self.client.force_authenticate(self.water_rep)
+        options = self.client.get(reverse('cep:representative-transfer-organizations'))
+        self.assertEqual(options.status_code, 200)
+        self.assertEqual([item['id'] for item in options.data], [self.roads.id])
+        self.assertEqual(self.client.patch(reverse('cep:representative-complaint-status', kwargs={'pk': created['id']}), {'status': 'in_progress'}, format='json').status_code, 200)
+        transferred = self.client.post(transfer_url, {'organization': self.roads.id}, format='json')
+        self.assertEqual(transferred.status_code, 200)
+        complaint = Complaint.objects.get(pk=created['id'])
+        self.assertEqual(complaint.organization_id, self.roads.id)
+        self.assertIsNone(complaint.category_id)
+        self.assertEqual(complaint.category_name_at_submission, 'Water leak')
+        self.assertEqual(complaint.assigned_representative_id, self.roads_rep.id)
+        self.assertEqual(complaint.status, Complaint.Status.PENDING)
+        event = ComplaintTransferEvent.objects.get(complaint=complaint)
+        self.assertEqual((event.from_organization_id, event.to_organization_id, event.actor_id), (self.water.id, self.roads.id, self.water_rep.id))
+        self.assertEqual(self.client.get(reverse('cep:representative-complaint-detail', kwargs={'pk': complaint.id})).status_code, 404)
+        self.client.force_authenticate(self.roads_rep)
+        detail = self.client.get(reverse('cep:representative-complaint-detail', kwargs={'pk': complaint.id}))
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.data['organization_name'], 'Water leak')
+        self.assertEqual(len(detail.data['transfer_events']), 1)
+        self.client.force_authenticate(self.citizen)
+        self.assertEqual(self.client.get(reverse('cep:citizen-complaint-detail', kwargs={'pk': complaint.id})).data['transfer_events'], [])
+
+    def test_transfer_rejects_wrong_owner_same_destination_and_closed_complaint(self):
+        created = self.submit(self.water)
+        url = reverse('cep:representative-complaint-transfer', kwargs={'pk': created['id']})
+        self.client.force_authenticate(self.roads_rep)
+        self.assertEqual(self.client.post(url, {'organization': self.water.id}, format='json').status_code, 404)
+        self.client.force_authenticate(self.water_rep)
+        self.assertEqual(self.client.post(url, {'organization': self.water.id}, format='json').status_code, 400)
+        self.assertEqual(self.client.post(url, {'organization': 99999}, format='json').status_code, 400)
+        self.assertEqual(self.client.patch(reverse('cep:representative-complaint-status', kwargs={'pk': created['id']}), {'status': 'rejected', 'note': 'Not our issue'}, format='json').status_code, 200)
+        self.assertEqual(self.client.post(url, {'organization': self.roads.id}, format='json').status_code, 400)
+        self.assertFalse(ComplaintTransferEvent.objects.filter(complaint_id=created['id']).exists())
 
     def test_rejection_requires_reason_and_other_organization_cannot_change_status(self):
         created = self.submit(self.water, self.water_category)

@@ -1,0 +1,31 @@
+.citizen-home{max-width:1050px;color:#101e55}
+.citizen-home-greeting h1{margin:0 0 19px;font-size:clamp(1.7rem,3.4vw,2.5rem);letter-spacing:-.04em}
+.citizen-home-hero{position:relative;display:flex;align-items:center;min-height:210px;overflow:hidden;padding:31px 34px;border-radius:21px;background:linear-gradient(110deg,#123b66,#0d5c77 68%,#0a8194);box-shadow:0 14px 30px rgba(9,61,93,.15);color:#fff}
+.citizen-home-hero>div{position:relative;z-index:2;max-width:55%}
+.citizen-home-hero h2{margin:0 0 8px;font-size:clamp(1.4rem,2.8vw,2rem);letter-spacing:-.025em}
+.citizen-home-hero p{max-width:360px;margin:0;color:#e0f1f5;line-height:1.5}
+.citizen-home-hero .cityscape{position:absolute;right:0;bottom:0;left:auto;width:58%;height:100%;opacity:.75;pointer-events:none}
+.citizen-home-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:15px}
+.citizen-home-action{display:flex;align-items:center;gap:16px;min-height:150px;padding:20px;border:1px solid #e8eef4;border-radius:18px;background:#fff;box-shadow:0 9px 23px rgba(29,64,107,.08);color:#102050;font:inherit;text-align:left;cursor:pointer}
+.citizen-home-action:hover{border-color:#f5b6ad;box-shadow:0 12px 26px rgba(29,64,107,.13)}
+.citizen-home-action:focus-visible{outline:3px solid #0aa6a9;outline-offset:2px}
+.citizen-home-action-icon{display:grid;place-items:center;flex:0 0 auto;width:58px;height:58px;border-radius:50%;background:#ffe7e3;color:#f07060}
+.citizen-home-action-copy{display:grid;gap:6px;flex:1;min-width:0}
+.citizen-home-action-copy strong{font-size:1.16rem}
+.citizen-home-action>svg{flex:0 0 auto;color:#7183a5}
+@media(max-width:760px){
+  .citizen-home{padding:22px 16px calc(95px + env(safe-area-inset-bottom))}
+  .citizen-home-greeting h1{font-size:1.72rem}
+  .citizen-home-hero{min-height:160px;padding:24px;border-radius:17px}
+  .citizen-home-hero>div{max-width:68%}
+  .citizen-home-hero h2{font-size:1.36rem}
+  .citizen-home-hero p{font-size:.88rem}
+  .citizen-home-hero .cityscape{width:74%;opacity:.63}
+  .citizen-home-actions{grid-template-columns:1fr;gap:9px}
+  .citizen-home-action{min-height:110px;gap:12px;padding:16px}
+  .citizen-home-action-icon{width:50px;height:50px}
+  .citizen-home-action-copy strong{font-size:1rem}
+}
+@media(max-width:420px){
+  .citizen-home-action{min-height:105px;padding:15px}
+}

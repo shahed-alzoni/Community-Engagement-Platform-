@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from cep.models import Complaint, ComplaintPhoto, ComplaintResolutionPhoto, Organization, OrganizationCategory, User
 from cep.serializers import ComplaintCreateSerializer, ComplaintSerializer
-from cep.serializers.complaint import ComplaintStatusChangeSerializer
+from cep.serializers.complaint import ComplaintStatusChangeSerializer, ComplaintTransferSerializer
 from cep.services.complaint import ComplaintService
 
 
@@ -113,6 +113,33 @@ class RepresentativeComplaintListView(generics.ListAPIView):
     def get_queryset(self):
         organization_id = self.request.user.active_organization_assignment.organization_id
         return Complaint.objects.filter(organization_id=organization_id).select_related('organization', 'category').prefetch_related('photos', 'status_events__resolution_photos')
+
+
+class RepresentativeTransferOrganizationListView(APIView):
+    permission_classes = [IsAssignedRepresentative]
+
+    def get(self, request):
+        current_id = request.user.active_organization_assignment.organization_id
+        return Response([
+            {'id': organization.pk, 'name': organization.citizen_display_name}
+            for organization in Organization.objects.exclude(pk=current_id).order_by('name')
+        ])
+
+
+class RepresentativeComplaintTransferView(APIView):
+    permission_classes = [IsAssignedRepresentative]
+
+    def post(self, request, pk):
+        serializer = ComplaintTransferSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        complaint = ComplaintService.transfer(
+            complaint_id=pk, representative=request.user,
+            destination=serializer.validated_data['organization'],
+        )
+        if complaint is None:
+            from rest_framework.exceptions import NotFound
+            raise NotFound('Complaint not found.')
+        return Response(ComplaintSerializer(complaint, context={'request': request}).data)
 
 
 class RepresentativeComplaintDetailView(generics.RetrieveAPIView):
