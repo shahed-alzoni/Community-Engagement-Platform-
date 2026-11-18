@@ -39,4 +39,6 @@ npm run lint
 npm run build
 ```
 
-The production bundle is written to `dist/`. Deploy it with a web server configured to route frontend paths back to `index.html` and to forward API requests to the Django backend.
+The production bundle is written to `dist/`. Serve it with an `index.html` fallback for frontend paths. When Frontend and Backend use separate public domains, set `VITE_API_BASE_URL` to the Backend API URL during the build; a reverse proxy is only needed if you choose a same-origin deployment.
+
+For Railway, use the build and start commands in [`../RAILWAY_DEPLOYMENT.md`](../RAILWAY_DEPLOYMENT.md). Set `VITE_API_BASE_URL` to the public Backend URL including `/api/v1` before building; the development proxy is not used in production.
