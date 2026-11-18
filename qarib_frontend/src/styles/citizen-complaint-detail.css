@@ -1,0 +1,54 @@
+.citizen-detail{max-width:900px;color:#101e55}
+.citizen-detail>.complaint-card{margin-top:12px;border-color:#eaf0f6;border-radius:17px;box-shadow:0 8px 25px rgba(29,64,107,.055)}
+.citizen-detail-summary{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.citizen-detail-summary h1{margin:12px 0 0;font-size:clamp(1.25rem,2.5vw,1.65rem);letter-spacing:-.025em}
+.citizen-detail-summary>.complaint-status{display:inline-flex;align-items:center;gap:6px;padding:9px 13px;font-weight:800}
+.citizen-detail-progress .complaint-timeline{grid-template-columns:repeat(var(--step-count),minmax(0,1fr));margin:0}
+.citizen-detail-progress .complaint-timeline-step>span{width:35px;height:35px}
+.citizen-detail-progress .complaint-timeline-step--current:not(.complaint-timeline-step--done)>span{border-color:#1676c5;background:#e7f2ff;color:#1269b4}
+.citizen-detail-progress .complaint-progress-note{margin:15px 0 0;color:#6a7c9b;text-align:center;font-size:.88rem}
+.citizen-detail-info .complaint-info-row{margin:12px 0}
+.citizen-detail-info .complaint-info-row:last-child{margin-bottom:0}
+.citizen-detail-info--pending .citizen-detail-info-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,28%);gap:18px;align-items:start}
+.citizen-detail-info--pending .citizen-detail-info-text{min-width:0}
+.citizen-detail-preview{display:grid;gap:8px;min-width:0}
+.citizen-detail-map-preview{overflow:hidden;border-radius:11px;background:#e8f2f7}
+.citizen-detail-map-preview .complaint-map{height:120px}
+.citizen-detail-preview-photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.citizen-detail-preview-photos>img:first-child,.citizen-detail-preview-photos>.citizen-detail-photo-loading:first-child{grid-column:1/-1;height:115px}
+.citizen-detail-preview-photos>img,.citizen-detail-preview-photos>.citizen-detail-photo-loading{width:100%;height:72px;object-fit:cover;border-radius:10px}
+.citizen-detail-resolution h2 svg{color:#10a474}
+.citizen-detail-resolution>p,.citizen-detail-rejection>p{margin:0 0 10px;color:#5d708e;line-height:1.55}
+.citizen-detail-date{display:flex;align-items:center;gap:7px;color:#71829e;font-size:.87rem}
+.citizen-detail-before-after{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
+.citizen-detail-photo-group{min-width:0}
+.citizen-detail-photo-label{display:inline-block;margin-bottom:7px;padding:5px 9px;border-radius:7px;background:#eaf2fa;color:#183760;font-size:.75rem;font-weight:800}
+.citizen-detail-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.citizen-detail-photo-group .citizen-detail-photo-grid{grid-template-columns:repeat(auto-fit,minmax(85px,1fr))}
+.citizen-detail-photo-grid img,.citizen-detail-photo-loading{display:block;width:100%;height:140px;object-fit:cover;border-radius:10px}
+.citizen-detail-photo-loading{display:grid;place-items:center;background:#edf3f8;color:#72829c;font-size:.75rem;text-align:center}
+.citizen-detail-location .complaint-detail-map .complaint-map{height:235px;margin:0}
+.citizen-detail-updates .complaint-history{margin-left:12px}
+.citizen-detail-updates .complaint-history>div{padding-bottom:17px}
+.citizen-detail-rejection h2 svg{color:#c55555}
+@media(max-width:760px){
+  .portal-app--complaint .citizen-detail{padding:10px 13px calc(96px + env(safe-area-inset-bottom))}
+  .portal-app--complaint .citizen-detail>.complaint-card{padding:17px;margin-top:9px}
+  .citizen-detail-summary{align-items:flex-start}
+  .citizen-detail-summary h1{font-size:1.1rem}
+  .citizen-detail-summary>.complaint-status{font-size:.72rem;padding:7px 9px}
+  .citizen-detail-progress .complaint-timeline-step{font-size:.7rem}
+  .citizen-detail-info--pending .citizen-detail-info-layout{grid-template-columns:minmax(0,1fr) minmax(105px,32%);gap:10px}
+  .citizen-detail-info--pending .complaint-info-row{gap:7px;font-size:.78rem;line-height:1.4}
+  .citizen-detail-info--pending .complaint-info-row svg{width:17px;height:17px}
+  .citizen-detail-map-preview .complaint-map{height:95px}
+  .citizen-detail-preview-photos>img:first-child,.citizen-detail-preview-photos>.citizen-detail-photo-loading:first-child{height:100px}
+  .citizen-detail-preview-photos>img,.citizen-detail-preview-photos>.citizen-detail-photo-loading{height:62px}
+  .citizen-detail-photo-grid img,.citizen-detail-photo-loading{height:105px}
+  .citizen-detail-location .complaint-detail-map .complaint-map{height:205px}
+}
+@media(max-width:390px){
+  .citizen-detail-summary{flex-wrap:wrap}
+  .citizen-detail-before-after{gap:7px}
+  .citizen-detail-photo-group .citizen-detail-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
