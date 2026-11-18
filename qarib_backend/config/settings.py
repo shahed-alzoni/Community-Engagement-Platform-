@@ -219,7 +219,17 @@ if ON_RAILWAY:
     if not os.getenv('S3_ENDPOINT_URL', '').startswith('https://'):
         raise ImproperlyConfigured('S3_ENDPOINT_URL must use HTTPS on Railway.')
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_DELIVERY_PROVIDER = os.getenv('EMAIL_DELIVERY_PROVIDER', 'smtp').strip().lower()
+if EMAIL_DELIVERY_PROVIDER == 'google_apps_script':
+    EMAIL_BACKEND = 'cep.email_backends.GoogleAppsScriptEmailBackend'
+    GOOGLE_APPS_SCRIPT_URL = os.getenv('GOOGLE_APPS_SCRIPT_URL', '').strip()
+    GOOGLE_APPS_SCRIPT_TOKEN = os.getenv('GOOGLE_APPS_SCRIPT_TOKEN', '')
+    if not GOOGLE_APPS_SCRIPT_URL.startswith('https://') or not GOOGLE_APPS_SCRIPT_TOKEN:
+        raise ImproperlyConfigured('Google Apps Script delivery requires an HTTPS URL and token.')
+elif EMAIL_DELIVERY_PROVIDER == 'smtp':
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    raise ImproperlyConfigured('EMAIL_DELIVERY_PROVIDER must be smtp or google_apps_script.')
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = get_bool_env('EMAIL_USE_TLS', default=True)
@@ -227,7 +237,7 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 EMAIL_TIMEOUT = 10
-if ON_RAILWAY and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):
+if ON_RAILWAY and EMAIL_DELIVERY_PROVIDER == 'smtp' and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):
     raise ImproperlyConfigured('EMAIL_HOST_USER and EMAIL_HOST_PASSWORD are required on Railway.')
 
 SIMPLE_JWT = {

@@ -38,12 +38,12 @@ Set these in the Backend service's Variables tab. Do not copy local `.env` secre
 | `S3_SECRET_ACCESS_KEY` | `${{Bucket.SECRET_ACCESS_KEY}}` |
 | `S3_ENDPOINT_URL` | `${{Bucket.ENDPOINT}}` |
 | `S3_REGION_NAME` | `${{Bucket.REGION}}` |
-| `EMAIL_HOST` | `smtp.gmail.com` unless using another SMTP server. |
-| `EMAIL_PORT` | `587` for Gmail STARTTLS. |
-| `EMAIL_USE_TLS` | `True` |
-| `EMAIL_HOST_USER` | Sender mailbox address. |
-| `EMAIL_HOST_PASSWORD` | Mailbox app password, entered only in Railway Variables. |
-| `DEFAULT_FROM_EMAIL` | Sender display name and address. |
+| `EMAIL_DELIVERY_PROVIDER` | `google_apps_script` for HTTPS delivery on Railway; local default is `smtp`. |
+| `GOOGLE_APPS_SCRIPT_URL` | HTTPS URL of the deployed Apps Script Web App; enter only in Railway Variables. |
+| `GOOGLE_APPS_SCRIPT_TOKEN` | Secret shared with Apps Script; enter only in Railway Variables. |
+| `DEFAULT_FROM_EMAIL` | Sender display name and address. Apps Script controls the actual sending account. |
+
+With `google_apps_script`, SMTP credentials are not required. For local SMTP development, keep `EMAIL_DELIVERY_PROVIDER=smtp` (or omit it) and configure `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, and `EMAIL_HOST_PASSWORD`. On Railway, SMTP mode still requires both SMTP credentials. The Apps Script endpoint must return JSON with `ok: true`; only the plain-text message body is sent, including for password-reset messages.
 
 Railway provides `RAILWAY_ENVIRONMENT` and `PORT` automatically. When `RAILWAY_ENVIRONMENT` is present, Django requires private S3 storage, disables debug, uses Railway's HTTPS proxy header, redirects to HTTPS, enables secure session/CSRF cookies, and sets a short HSTS lifetime. Local `.env` and filesystem uploads continue to work without that variable. Uploaded files must never be placed in `STATIC_ROOT`; WhiteNoise serves only collected static assets.
 
